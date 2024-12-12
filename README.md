@@ -1,17 +1,24 @@
 # VDA5050
 
-An open standard for communication between AGV fleets and a central master control. Developed jointly by the German Association of the Automotive Industry (www.vda.de) and the Mechanical Engineering Industry Association (www.vdma.org), as well as the Institute for Material Flow and Logistics (IFL) at KIT (www.ifl.kit.edu) and many contributors from the AMR industry.
+**本文書は大部分が機械翻訳を元に翻訳されているので、適宜英語版原文を参照ください**
 
-**DISCLAIMER**: We are constantly working to improve the VDA 5050. If there are any differences between the markdown document/JSON schemas on GitHub and the published document by the VDA, the PDF on the VDA website is valid. The current version of the official VDA 5050 document can be found here ([German](https://www.vda.de/de/suche#"5050")/[English](https://www.vda.de/en/search#"5050")).
+これはAGV群と中央のマスター制御間の通信のためのオープンスタンダードです。ドイツ自動車工業会（www.vda.de）と機械工学工業会（www.vdma.org）、および KIT（www.ifl.kit.edu）のマテリアルフロー・ロジスティクス研究所（IFL）と AMR 業界の多数の貢献者により共同開発されました。
 
-# How to contribute
-If you work for a VDA / VDMA member, ask your contact person if you can join the working group.
-Everyone is free to raise issues or suggest new improvements to the protocol.
+免責事項：VDA 5050の改善に常に取り組んでいます。GitHub上のマークダウン文書/JSONスキーマとVDAが公開した文書に相違がある場合は、VDAウェブサイト上のPDFが有効です。VDA 5050の公式文書の最新版は、こちらをご覧ください（[ドイツ語](https://www.vda.de/de/suche#「5050」)/[英語](https://www.vda.de/en/search#「5050」))。
 
-Anyone is free to raise issues or suggest new improvements to the protocol using the Github issues. Github issues will be marked by the VDA/VDMA team as **VD(M)A in progress** if the issue is discussed in the monthly VDA 5050 meetings. If the issue has been accepted by the team, it will receive a milestone tag indicating when the change will be added to the document, according to
+# 貢献する方法
+VDA / VDMA の会員企業に勤務している場合は、担当者にワーキンググループへの参加が可能かどうか問い合わせてください。
+プロトコルに関する問題提起や新たな改善策の提案は、どなたでも自由に行うことができます。
 
-- V2.1.1: Minor changes such as typos and fixes,
-- V2.2.0: Non-breaking, backward-compatible changes,
-- V3.0.0: Breaking changes, which would mean reworking structures or variable names.
+GitHubの課題を使用して、誰でも自由に問題提起やプロトコルの新たな改善案を提示することができます。GitHubの課題は、その問題が毎月のVDA 5050会議で議論された場合、VDA/VDMAチームによって「**VD(M)A in progress**」とマークされます。その問題がチームによって承認された場合、文書に変更が追加される時期を示すマイルストーンタグが付けられます。
 
-When creating pull requests, please create them against the *development* branch. The *main* branch contains the latest published version of VDA 5050 (currently version 2.1.0).
+- V2.1.1: 誤字脱字や修正などの軽微な変更、
+- V2.2.0: 後方互換性を維持した変更、
+- V3.0.0: 構造や変数名を変更するような大幅な変更、
+
+プルリクエストを作成する際は、*development*ブランチに対して作成してください。*main*ブランチには、VDA 5050の最新公開バージョン（現在、バージョン2.1.0）が含まれています。
+
+# 参考文献
+本文書を翻訳する際に参考にした文献を以下にしめす。
+
+- [物流倉庫で活用される自動化・デジタル化技術の国際展開に向けたルール形成戦略に係る調査](https://www.meti.go.jp/meti_lib/report/2021FY/000757.pdf)
