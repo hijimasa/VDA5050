@@ -51,17 +51,17 @@ Version 2.1.0
 [3 本文書の範囲](#3-本文書の範囲)<br>
 [3.1 その他の適用される文書](#31-その他の適用される文書)<br>
 [4 要件とプロトコルの定義](#4-要件とプロトコルの定義)<br>
-[5 Process and content of communication](#5-process-and-content-of-communication)<br>
-[6 Protocol specification](#6-protocol-specification)<br>
-[6.1 Symbols of the tables and meaning of formatting](#61-symbols-of-the-tables-and-meaning-of-formatting)<br>
-[6.1.1 Optional fields](#611-optional-fields)<br>
-[6.1.2 Permitted characters and field lengths](#612-permitted-characters-and-field-lengths)<br>
-[6.1.3 Notation of enumerations](#613-notation-of-enumerations) <br>
-[6.1.4 JSON data types](#614-json-data-types)<br>
-[6.2 MQTT connection handling, security and QoS](#62-mqtt-connection-handling-security-and-qos)<br>
-[6.3 MQTT topic levels](#63-mqtt-topic-levels)<br>
-[6.4 Protocol header](#64-protocol-header)<br>
-[6.5 Topics for communication](#65-topics-for-communication)<br>
+[5 コミュニケーションのプロセスと内容](#5-コミュニケーションのプロセスと内容)<br>
+[6 プロトコル仕様](#6-プロトコル仕様)<br>
+[6.1 表の記号と書式の意味](#61-表の記号と書式の意味)<br>
+[6.1.1 オプション項目](#611-オプション項目)<br>
+[6.1.2 許可された文字およびフィールド長](#612-許可された文字およびフィールド長)<br>
+[6.1.3 フィールド、トピック、列挙の表記](#613-フィールド、トピック、列挙の表記) <br>
+[6.1.4 JSON データ型](#614-json-データ型)<br>
+[6.2 MQTT 接続の処理、セキュリティ、QoS](#62-mqtt-接続の処理、セキュリティ、QoS)<br>
+[6.3 MQTT トピックレベル](#63-mqtt-トピックレベル)<br>
+[6.4 プロトコルヘッダー](#64-プロトコルヘッダー)<br>
+[6.5 通信トピック](#65-通信トピック)<br>
 [6.6 Topic: "order" (from master control to AGV)](#66-topic-orderfrom-master-control-to-agv)<br>
 [6.6.1 Concept and logic](#661-concept-and-logic)<br>
 [6.6.2 Orders and order updates](#662-orders-and-order-update)<br>
@@ -182,219 +182,217 @@ JSON構造により、追加のパラメータによるプロトコルの将来�
 パラメータは英語で記述されており、プロトコルがドイツ語圏以外でも読みやすく、理解しやすく、適用しやすいように配慮されている。
 
 
-# 5 Process and content of communication
+# 5 コミュニケーションのプロセスと内容
 
-There are at least the following participants for the operation of AGVs:
+AGVの運用には、少なくとも以下の参加者が存在する。
 
-- The operator of the AGV system provides basic information
-- The master control organizes and manages the operation
-- The AGV carries out the orders
+- AGVシステムの運用者（基本的な情報を提供する）
+- マスターコントロール（運用を組織化および管理）
+- AGV（命令を実行）
 
-Figure 2 describes the communication content during the operational phase.
-During implementation or modification, the AGV and master control are manually configured.
+図2は、運用段階における通信内容を説明している。
+実装または変更時には、AGVとマスターコントロールを手動で構成する。
+
 
 ![Figure 2 Structure of the Information Flow](./assets/information_flow_VDA5050.png)
->Figure 2 Structure of the Information Flow
+>図2 情報の流れの構造
 
-During the implementation phase, the driverless transport systems (DTS) consisting of master control and AGVs is set up.
-The necessary framework conditions are defined by the operator and the required information is either entered manually by them or stored in the master control by importing from other systems.
-Essentially, this concerns the following content:
+実装段階では、マスターコントロールとAGVで構成される無人搬送システム（DTS）が設定される。
+必要な枠組み条件はオペレーターによって定義され、必要な情報はオペレーターが手動で入力するか、他のシステムからインポートしてマスターコントロールに保存する。
+基本的には、以下の内容が関係する。
+- ルートの定義：CADインポートを使用して、ルートをマスターコントロールにインポートすることができる。
+あるいは、オペレーターがマスターコントロールに手動でルートを実装することもできる。
+ルートは一方通行の道路であったり、特定の車両グループ（サイズ比に基づく）に制限を設けたりすることができる。
+- ルートネットワーク構成：
+ルート内では、荷積みおよび荷降ろしステーション、バッテリー充電ステーション、周辺環境（ゲート、エレベーター、バリア）、待機位置、バッファステーションなどが定義される。
+車両構成：AGVの物理的特性（サイズ、利用可能な荷台の数など）は、オペレータが保存する。
+AGVは、この情報を、この文書のセクション[6.15 `factsheet`トピック](#615-topic-factsheet) で定義されている特定の方法で、`factsheet`トピックを介して通信する。
 
-- Definition of routes: Using CAD import, routes can be imported to the master control.
-Alternatively, routes can also be implemented manually in the master control by the operator.
-Routes can be one-way streets, restricted for certain vehicle groups (based on the size ratios), etc.
-- Route network configuration:
-Within the routes, stations for loading and unloading, battery charging stations, peripheral environments (gates, elevators, barriers), waiting positions, buffer stations, etc. are defined.
-- Vehicle configuration: The physical properties of an AGV (size, available load carrier mounts, etc.) are stored by the operator.
-The AGV shall communicate this information via the topic `factsheet` in a specific way that is defined in Section [6.15 Topic "Factsheet"](#615-topic-factsheet) of this document.
+上述のルート構成およびルートネットワークは、本ドキュメントの対象ではない。
+これらは、この情報と完了すべき輸送要件に基づいて、マスターコントロールによる注文管理とコース割り当てを可能にするための基礎となる。
+AGVに対する注文は、MQTTメッセージブローカーを介して車両に転送される。
+これにより、ジョブの実行と並行して、車両の状態がマスターコントロールに継続的に報告される。
+これも、MQTTメッセージブローカーを使用して行われる。
 
-The configuration of routes and the route network described above are not part of this document.
-They form the basis for enabling order control and driving course assignment by the master control based on this information and the transport requirements to be completed.
-The resulting orders for an AGV are then transferred to the vehicle via an MQTT message broker.
-This then continuously reports its status to the master control in parallel with the execution of the job.
-This is also done using the MQTT message broker.
+マスターコントロールの機能は以下の通りである。
 
-Functions of the master control are:
+- AGVへの注文の割り当て
+- AGVのルート計算と誘導（各AGVの物理的特性（サイズ、操縦性など）の制限を考慮）
+- 障害（デッドロック）の検出と解決
+- エネルギー管理：充電の注文が搬送の注文を中断できる
+- 交通管理：バッファルートと待機位置
+- 特定エリアの解放や最高速度の変更など、環境の（一時的な）変化
+- ドア、ゲート、エレベーターなどの周辺システムとの通信
+- 通信エラーの検出と解決
 
-- Assignment of orders to the AGVs
-- Route calculation and guidance of the AGVs (taking into account the limitations of the individual physical properties of each AGV, e.g., size, maneuverability, etc.)
-- Detection and resolution of blockages ("deadlocks")
-- Energy management: Charging orders can interrupt transfer orders
-- Traffic control: Buffer routes and waiting positions
-- (Temporary) changes in the environment, such as freeing certain areas or changing the maximum speed
-- Communication with peripheral systems such as doors, gates, elevators, etc.
-- Detection and resolution of communication errors
+AGVの機能は以下の通りである。
 
-Functions of the AGVs are:
+- 位置推定
+- 関連ルートに沿ったナビゲーション（誘導または自律）
+- アクションの実行
+- 車両状態の継続的な送信
 
-- Localization
-- Navigation along associated routes (guided or autonomous)
-- Execution of actions
-- Continuous transmission of vehicle status
+さらに、インテグレーターは、システム全体を構成する際に以下の点に留意する必要がある（不完全なリスト）：
 
-In addition, the integrator shall take into account the following when configuring the overall system (incomplete list):
-
-- Map configuration: The coordinate systems of the master control and the AGV shall be matched.
-- Pivot point: The use of different points of the AGV or points of charge as a pivot point leads to different envelopes of the vehicle. The reference point may vary depending on the situation, e.g., it may be different for an AGV carrying a load and for an AGV that does not carry a load.
-
-
-# 6 Protocol specification
-
-The following section describes the details of the communication protocol.
-The protocol specifies the communication between the master control and the AGV.
-Communication between the AGV and peripheral equipment, e.g., between the AGV and a gate, is excluded.
-
-The different messages are presented in tables describing the contents of the fields of the JSON that is sent as an order, state, etc.
-
-In addition, JSON schemas are available for validation in the public git repository (https://github.com/VDA5050/VDA5050).
-The JSON schemas are updated with every release of the VDA5050. If there are differences between the JSON schemas and this document, the variant in this document applies.
+- マップ構成：マスターコントロールとAGVの座標システムを一致させる必要がある。
+- ピボットポイント：AGVの異なるポイントまたは充電ポイントをピボットポイントとして使用すると、車両の異なるエンベロープにつながる。状況によって基準点が異なる場合がある。例えば、荷物を運搬しているAGVと荷物を運搬していないAGVでは基準点が異なる場合がある。
 
 
-## 6.1 Symbols of the tables and meaning of formatting
+# 6 プロトコル仕様
 
-The table contains the name of the identifier, its unit, its data type, and a description, if any.
+次のセクションでは、通信プロトコルの詳細について説明する。
+このプロトコルは、マスターコントロールとAGV間の通信を規定する。
+AGVと周辺機器間の通信、例えばAGVとゲート間の通信は対象外である。
 
-Identification | Description
+異なるメッセージは、命令、状態などとして送信されるJSONのフィールドの内容を説明する表に示されている。
+
+また、JSONスキーマは、公開されているGitリポジトリ（https://github.com/VDA5050/VDA5050）で検証できる。
+JSONスキーマは、VDA5050のリリースごとに更新される。JSONスキーマと本書の内容に相違がある場合は、本書の記述が優先される。
+
+
+## 6.1 表の記号と書式の意味
+
+表には、識別子の名前、その単位、データタイプ、および説明（存在する場合）が含まれる。
+
+識別子 | 説明
 ---|---
-standard | Variable is an elementary data type
-**bold** | Variable is a non-elementary data type (e.g., JSON object or array) and defined separately
-*italic* | Variable is optional
-***italic and bold***| Variable is optional and a non-elementary data type
-arrayName[arrayDataType] | Variable (here arrayName) is an array of the data type included in the square brackets (here the data type is arrayDataType)
+標準|変数は基本データタイプである
+**太字**|変数は非基本データタイプ（例：JSON オブジェクトまたは配列）であり、別途定義されている
+*イタリック体*|変数はオプションである
+*****イタリック体およびボールド体*****|変数はオプションかつ非基本データタイプである
+**非基本データ型配列名[配列データ型]**|オプションの変数（ここでは配列名）は、角括弧内に含まれるデータ型の配列（ここでは配列データ型）である
 
-All keywords are case sensitive.
-All field names are in camelCase.
-All enumerations are in UPPERCASE without underscores.
-
-
-### 6.1.1 Optional fields
-
-If a variable is marked as optional, it means that it is optional for the sender because the variable might not be applicable in certain cases (e.g., when the master control sends an order to an AGV, some AGVs plan their trajectory themselves and the field `trajectory` within the `edge` object of the order can be omitted).
-
-If the AGV receives a message that contains a field which is marked as optional in this protocol, the AGV is expected to act accordingly and cannot ignore the field.
-If the AGV cannot process the message accordingly then the expected behavior is to communicate this within an error message and to reject the order.
-
-Master control shall only send optional information that the AGV supports.
-
-Example: Trajectories are optional.
-If an AGV cannot process trajectories, master control shall not send a trajectory to the vehicle.
-
-The AGV shall communicate which optional parameters it needs via an AGV `factsheet` message.
+すべてのキーワードは大文字と小文字が区別される。
+すべてのフィールド名はキャメルケースである。
+すべての列挙はアンダースコアなしの大文字表記である。
 
 
-### 6.1.2 Permitted characters and field lengths
+### 6.1.1 オプション項目
 
-All communication is encoded in UTF-8 to enable international adaption of descriptions.
-The recommendation is that IDs should only use the following characters:
+変数がオプションとしてマークされている場合、それは送信者にとってオプションであることを意味します。なぜなら、変数は特定のケースでは適用できない可能性があるからです（例えば、マスター制御がAGVに命令を送信する場合、一部のAGVは自ら軌道を計画し、その注文の `edge` オブジェクト内の `trajectory` フィールドは省略できます）。
+このプロトコルでオプションと指定されたフィールドを含むメッセージをAGVが受信した場合、AGVはそれに応じて動作することが期待され、そのフィールドを無視することはできません。
+
+AGVがメッセージを適切に処理できない場合、期待される動作は、エラーメッセージ内でその旨を通知し、注文を拒否することです。
+マスタ制御は、AGVがサポートするオプション情報のみを送信します。
+
+例：軌道はオプションです。
+AGVが軌道を処理できない場合、マスター制御は車両に軌道を送信しない。
+
+AGVは、必要なオプションパラメータをAGV `factsheet`メッセージで通信する。
+
+
+### 6.1.2 許可された文字およびフィールド長
+
+すべての通信は、記述の国際的な適応を可能にするためにUTF-8でエンコードされる。
+IDには以下の文字のみを使用することが推奨される。
 
 A-Z a-z 0-9 _ - . :
 
-A maximum message length is not defined, but limited by the MQTT protocol specification and perhaps by technical constraints defined inside the factsheet.
-If an AGVs memory is insufficient to process an incoming order, it is to reject the order.
-The matching of maximum field lengths, string lengths or value ranges is up to the integrator.
-For ease of integration, AGV vendors shall supply an AGV factsheet that is detailed in [Factsheet Section](#616-topic-factsheet).
+メッセージの最大長は定義されていませんが、MQTTプロトコルの仕様およびファクトシート内で定義された技術的制約によって制限される場合がある。
+AGVのメモリが受信した注文を処理するには不十分な場合、その注文は拒否される。
+最大フィールド長、文字列長、または値の範囲の一致はインテグレータの判断に委ねられる。
+統合を容易にするため、AGVベンダーは[Factsheet Section](#616-topic-factsheet)で詳細を説明しているAGVファクトシートを提供しなければならない。
 
 
-### 6.1.3 Notation of fields, topics and enumerations
+### 6.1.3 フィールド、トピック、列挙の表記
 
-Topics and fields in this document are highlighted in the following style: `exampleField` and `exampleTopic`.
-Enumerations shall be written in uppercase. These values are enclosed in single quotation marks in the document.
-This includes keywords such as in the `actionStatus` field ('WAITING', 'FINISHED', etc.).
+この文書内のトピックおよびフィールドは、次のスタイルでハイライト表示されます。「exampleField」および「exampleTopic」。
+列挙は大文字で表記します。これらの値は、文書内で単一引用符で囲みます。
+これには、`actionStatus` フィールド（「WAITING」、「FINISHED」など）などのキーワードが含まれます。
 
+### 6.1.4 JSON データ型
 
-### 6.1.4 JSON data types
-
-Where possible, JSON data types shall be used.
-A Boolean value is thus encoded by "true" or "false", not with an enumeration ('TRUE', 'FALSE') or magic numbers.
-Numerical data types are specified with type and precision, e.g., float64 or uint32. Special number values from the IEEE 754 like NaN and infinity are not supported.
-
-
-## 6.2 MQTT connection handling, security and QoS
-
-The MQTT protocol provides the option of setting a last will message for a client.
-If the client disconnects unexpectedly for any reason, the last will is distributed by the broker to other subscribed clients.
-The use of this feature is described in Section [6.14 Topic "connection"](#614-topic-connection).
-
-If the AGV disconnects from the broker, it keeps all the order information and fulfills the order up to the last released node.
-
-Protocol security needs to be taken into account by broker configuration.
-
-To reduce the communication overhead, the MQTT QoS level 0 (Best Effort) is to be used for the topics `order`, `instantActions`, `state`, `factsheet` and `visualization`.
-The topic `connection` shall use the QoS level 1 (At Least Once).
+可能な場合は、JSON データ型を使用するものとします。
+したがって、ブール値は「true」または「false」でエンコードされ、列挙（「TRUE」、「FALSE」）やマジックナンバーは使用しません。
+数値データ型は、型と精度（例：float64 または uint32）で指定します。IEEE 754 の NaN や infinity のような特殊な数値値はサポートされていません。
 
 
-## 6.3 MQTT topic levels
+## 6.2 MQTT 接続の処理、セキュリティ、QoS
 
-The MQTT topic structure is not strictly defined due to the mandatory topic structure of cloud providers.
-For a cloud-based MQTT broker the topic structure has to be adapted individually to match the topics defined in this protocol.
-This means that the topic names defined in the following sections are mandatory.
+MQTT プロトコルでは、クライアントの最終メッセージを設定するオプションが提供されている。
+何らかの理由でクライアントが予期せず切断した場合、ブローカーによって他の購読中のクライアントに最終メッセージが配信される。
+この機能の使用については、セクション [6.14 トピック「接続」](#614-topic-connection) で説明されている。
 
-For a local broker the MQTT topic levels are suggested as followed:
+AGVがブローカーから切断された場合、すべての注文情報を保持し、最後にリリースされたノードまで注文を履行する。
 
-**interfaceName/majorVersion/manufacturer/serialNumber/topic**
+プロトコルのセキュリティは、ブローカー構成で考慮する必要がある。
 
-Example:
+通信オーバーヘッドを削減するために、トピック `order`、`instantActions`、`state`、`factsheet`、および `visualization` には、MQTT QoSレベル0（ベストエフォート）を使用する。
+トピック「connection」は、QoSレベル1（最低でも1回）を使用する。
+
+
+## 6.3 MQTT トピックレベル
+
+クラウドプロバイダーの必須のトピック構造により、MQTT トピック構造は厳密には定義されていない。
+クラウドベースの MQTT ブローカーでは、トピック構造は本プロトコルで定義されたトピックに一致するように個別に適応させる必要がある。
+つまり、以下のセクションで定義されたトピック名は必須である。
+
+ローカルブローカーでは、MQTT トピックレベルは以下のようにお勧めする。
+
+**インターフェース名/メジャーバージョン/メーカー/シリアル番号/トピック**
+
+例：
 ```
 uagv/v2/KIT/0001/order
 ```
 
-MQTT Topic Level | Data type | Description
+MQTT トピックレベル|データタイプ|説明
 ---|---|---
-interfaceName | string | Name of the used interface
-majorVersion | string | Major version number of the VDA 5050 recommendation, preceded by "v"
-manufacturer | string | Manufacturer of the AGV.
-serialNumber | string | Unique AGV serial number consisting of the following characters: <br>A-Z <br>a-z <br>0-9 <br>_ <br>. <br>: <br>-
-topic | string | Topic (e.g., order or state) see Section [6.5 Topics for Communication](#65-topics-for-communication)
+interfaceName | string | 使用インターフェースの名前
+majorVersion | string | `v`で始まる VDA 5050 勧告のメジャーバージョン番号
+manufacturer | string | AGVのメーカー名
+serialNumber | string | 以下の文字で構成されるAGVの固有のシリアル番号：<br>A-Z <br>a-z <br>0-9 <br>_ <br>. <br>: <br>-
+topic | string | トピック（例：注文や状態） セクション[6.5 トピックによる通信](#65-topics-for-communication)を参照
 
-Note: Since the `/` character is used to define topic hierarchies, it shall not be used in any of the aforementioned fields.
-The `$` character is also used in some MQTT brokers for special internal topics, so it should not be used either.
+注：トピック階層を定義するために`/`文字が使用されるため、前述のフィールドのいずれにも使用しないでください。
+`$`文字も、一部のMQTTブローカーで特別な内部トピックに使用されるため、使用しないでください。
 
 
-## 6.4 Protocol header
+## 6.4 プロトコルヘッダー
 
-Each JSON message starts with a header.
-In the following sections, the following fields will be referenced as header for readability.
-The header consists of the following individual elements.
-The header is not a JSON object.
+各 JSON メッセージはヘッダーで始まります。
+以下のセクションでは、読みやすさを考慮して、以下のフィールドをヘッダーとして参照します。
+ヘッダーは以下の個々の要素で構成されます。
+ヘッダーは JSON オブジェクトではありません。
 
-Object structure/Identifier | Data type | Description
+オブジェクト構造/識別子|データ型|説明
 ---|---|---
-headerId | uint32 | Header ID of the message.<br> The headerId is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
-timestamp | string | Timestamp (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z").
-version | string | Version of the protocol [Major].[Minor].[Patch] (e.g., 1.3.2).
-manufacturer | string | Manufacturer of the AGV.
-serialNumber | string | Serial number of the AGV.
+headerId|uint32|メッセージのヘッダーID。<br>headerIdはトピックごとに定義され、送信メッセージごとに1ずつインクリメントされる（受信では必要ない）。
+timestamp | string | タイムスタンプ（ISO 8601、UTC）YYYY-MM-DDTHH:mm:ss.ffZ（例：「2017-04-15T11:40:03.12Z」）。
+version | string | プロトコルのバージョン [メジャー].[マイナー].[パッチ]（例：1.3.2）。
+manufacturer | string | AGVのメーカー名。
+serialNumber | string | AGVのシリアル番号。
 
 
-### Protocol version
+### プロトコルのバージョン
 
-The protocol version uses semantic versioning as versioning schema.
+プロトコルのバージョンは、バージョンスキーマとしてセマンティックバージョンニングを使用します。
 
-Examples for major version changes:
+メジャーバージョン変更の例：
 
-- Breaking changes, e.g., new non-optional fields
+- ブレイキングチェンジ、例えば、必須フィールドの追加
 
-Examples for minor version changes:
+マイナーバージョン変更の例：
 
-- New features like an additional topic for visualization
+- 可視化のためのトピックの追加などの新機能
 
-Examples for patch version:
+パッチバージョンの例：
 
-- Higher available precision for a batteryCharge
+- batteryChargeのより高い精度
 
 
-## 6.5 Topics for communication
+## 6.5 通信トピック
 
-The AGV protocol uses the following topics for information exchange between master control and AGV.
+AGVプロトコルでは、マスター制御とAGV間の情報交換に以下のトピックを使用する。
 
-Topic name | Published by | Subscribed by | Used for | Implementation | Schema
+トピック名 | 公開者 | 購読者 | 用途 | 実装 | スキーマ
 ---|---|---|---|---|---
-order | master control | AGV | Communication of driving orders from master control to the AGV | mandatory | order.schema
-instantActions | master control | AGV | Communication of the actions that are to be executed immediately | mandatory | instantActions.schema
-state | AGV | master control | Communication of the AGV state | mandatory | state.schema
-visualization | AGV | Visualization systems | Higher frequency of position topic for visualization purposes only | optional | visualization.schema
-connection | Broker/AGV | master control | Indicates when AGV connection is lost, not to be used by master control for checking the vehicle health, added for an MQTT protocol level check of connection | mandatory | connection.schema 
-factsheet | AGV | master control | Parameters or vendor-specific information to assist set-up of the AGV in master control | mandatory | factsheet.schema
+order|マスター制御|AGV|マスター制御からAGVへの運転命令の通信|必須|order.schema
+instantActions | マスター制御 | AGV | 即座に実行されるアクションの通信 | 必須 |instantActions.schema
+state | AGV | マスター制御 | AGVの状態の通信 | 必須 | state.schema
+visualization | AGV | 視覚化システム | 視覚化のみを目的とした位置情報を有する更新頻度の高いトピック | オプション | visualization.schema
+connection | ブローカー/AGV | マスター制御 | AGV接続が失われたことを示す。車両の状態を確認するためにマスター制御で使用しない。MQTTプロトコルの接続レベルチェック用に追加された | 必須 | connection.schema 
+factsheet | AGV | マスター制御 | マスター制御におけるAGVのセットアップを支援するパラメータまたはベンダー固有の情報 | 必須 | factsheet.schema
 
 
 ## 6.6 Topic: "order" (from master control to AGV)
