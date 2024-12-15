@@ -62,19 +62,19 @@ Version 2.1.0
 [6.3 MQTT トピックレベル](#63-mqtt-トピックレベル)<br>
 [6.4 プロトコルヘッダー](#64-プロトコルヘッダー)<br>
 [6.5 通信トピック](#65-通信トピック)<br>
-[6.6 Topic: "order" (from master control to AGV)](#66-topic-orderfrom-master-control-to-agv)<br>
-[6.6.1 Concept and logic](#661-concept-and-logic)<br>
-[6.6.2 Orders and order updates](#662-orders-and-order-update)<br>
-[6.6.3 Order cancellation (by master control)](#663-order-cancellation-by-master-control)<br>
-[6.6.4 Order rejection](#664-order-rejection)<br>
+[6.6 トピック："order"（マスターコントロールからAGVへの）](#66-トピック：order（マスターコントロールからagvへの）)<br>
+[6.6.1 概念とロジック](#661-概念とロジック)<br>
+[6.6.2 注文と注文の更新](#662-注文と注文の更新)<br>
+[6.6.3 注文キャンセル（マスターコントロールによる）](#663-注文キャンセル（マスターコントロールによる）)<br>
+[6.6.4 注文の拒否](#664-注文の拒否)<br>
 [6.6.5 Corridors](#665-corridors)<br>
-[6.6.6 Implementation of the order message](#666-implementation-of-the-order-message)<br>
-[6.7 Maps](#67-maps)<br>
-[6.7.1 Map distribution](#671-map-distribution)<br>
-[6.7.2 Maps in vehicle state](#672-maps-in-the-vehicle-state)<br>
-[6.7.3 Map download](#673-map-download)<br>
-[6.7.4 Enable downloaded maps](#674-enable-downloaded-maps)<br>
-[6.7.5 Delete maps on vehicle](#675-delete-maps-on-vehicle)<br>
+[6.6.6 注文メッセージの実装](#666-注文メッセージの実装)<br>
+[6.7 地図](#67-地図)<br>
+[6.7.1 地図の配布](#671-地図の配布)<br>
+[6.7.2 車両状態の地図](#672-車両状態の地図)<br>
+[6.7.3 地図のダウンロード](#673-地図のダウンロード)<br>
+[6.7.4 ダウンロードされた地図の有効化](#674-ダウンロードされた地図の有効化)<br>
+[6.7.5 車両上地図の削除](#675-車両上地図の削除)<br>
 [6.8 Actions](#68-actions)<br>
 [6.8.1 Definition, parameters, effects and scope of predefined actions](#681-definition-parameters-effects-and-scope-of-predefined-actions)<br>
 [6.8.2 States of predefined actions](#682-states-of-predefined-actions)<br>
@@ -92,9 +92,9 @@ Version 2.1.0
 [6.14 Topic "connection"](#614-topic-connection)<br>
 [6.15 Topic "factsheet"](#615-topic-factsheet)<br>
 [6.15.1 Factsheet JSON structure](#6151-factsheet-json-structure)<br>
-[7 Best practice](#7-best-practice)<br>
-[7.1 Error reference](#71-error-reference)<br>
-[7.2 Format of parameters](#72-format-of-parameters)<br>
+[7 ベストプラクティス](#7-ベストプラクティス)<br>
+[7.1 エラー参照](#71-エラー参照)<br>
+[7.2 パラメータのフォーマット](#72-パラメータのフォーマット)<br>
 [8 用語集](#8-用語集)<br>
 [8.1 定義](#81-定義)<br>
 
@@ -120,14 +120,14 @@ GitHub経由で本ドキュメントに貢献していただいた場合は、�
 必要な情報（注文情報など）は中央サービスから提供され、一般的に有効であるため、「プラグ＆プレイ」機能が高く、実装時間の短縮が可能。労働安全衛生要件を考慮した実装作業は同じであるため、車両はメーカーに関係なく稼働できることが望ましい。
 - すべての輸送車両、車両モデル、およびメーカーに対応するロジックを統一した包括的な調整を行うことにより、システムの複雑性を低減し、「プラグ・アンド・プレイ」機能を向上させる。
 - 車両制御レベルと調整レベル間の共通インターフェースを使用することにより、メーカーの独立性を向上させる。
-- 独自仕様のマスター制御と上位のマスター制御間の垂直通信を実装することにより、独自仕様のDTS在庫システムを統合する（図1参照）。
+- 独自仕様のマスターコントロールと上位のマスターコントロール間の垂直通信を実装することにより、独自仕様のDTS在庫システムを統合する（図1参照）。
 
 ![Figure 1 Integration of DTS inventory systems](./assets/concept_DTS.png)
 >図1 DTSの在庫管理システムの統合
 
-上記の目的を達成するために、本書では、AGVとマスター制御間の注文およびステータス情報の通信インターフェースについて説明する。
+上記の目的を達成するために、本書では、AGVとマスターコントロール間の注文およびステータス情報の通信インターフェースについて説明する。
 
-AGVとマスター制御間の動作（経路計画などにおいて特別なスキルを自由に考慮するなど）や、他のシステムコンポーネント（外部周辺機器、防火ゲートなど）との通信に必要なその他のインターフェースは、本書には初めから含まれていない。
+AGVとマスターコントロール間の動作（経路計画などにおいて特別なスキルを自由に考慮するなど）や、他のシステムコンポーネント（外部周辺機器、防火ゲートなど）との通信に必要なその他のインターフェースは、本書には初めから含まれていない。
 
 
 # 3 本文書の範囲
@@ -146,7 +146,7 @@ AGVとマスター制御間の動作（経路計画などにおいて特別な�
 自律型システムは完全に分散型（群知能）ではなく、あらかじめ定義されたルールに従って、規定された動作を行う。
 
 持続可能なソリューションを目的として、以下に構造を拡張可能なインターフェースを説明する。
-これにより、誘導される車両のマスター制御を完全にカバーすることが可能となる。
+これにより、誘導される車両のマスターコントロールを完全にカバーすることが可能となる。
 自由に走行する車両も構造に統合することが可能である。これに必要な詳細な仕様は、本勧告の対象ではない。
 
 独自仕様の在庫管理システムの統合には、個別のインターフェース定義が必要になる場合があるが、これは本勧告の対象ではない。
@@ -269,14 +269,14 @@ JSONスキーマは、VDA5050のリリースごとに更新される。JSONス�
 
 ### 6.1.1 オプション項目
 
-変数がオプションとしてマークされている場合、それは送信者にとってオプションであることを意味します。なぜなら、変数は特定のケースでは適用できない可能性があるからです（例えば、マスター制御がAGVに命令を送信する場合、一部のAGVは自ら軌道を計画し、その注文の `edge` オブジェクト内の `trajectory` フィールドは省略できます）。
+変数がオプションとしてマークされている場合、それは送信者にとってオプションであることを意味します。なぜなら、変数は特定のケースでは適用できない可能性があるからです（例えば、マスターコントロールがAGVに命令を送信する場合、一部のAGVは自ら軌道を計画し、その注文の `edge` オブジェクト内の `trajectory` フィールドは省略できます）。
 このプロトコルでオプションと指定されたフィールドを含むメッセージをAGVが受信した場合、AGVはそれに応じて動作することが期待され、そのフィールドを無視することはできません。
 
 AGVがメッセージを適切に処理できない場合、期待される動作は、エラーメッセージ内でその旨を通知し、注文を拒否することです。
 マスタ制御は、AGVがサポートするオプション情報のみを送信します。
 
 例：軌道はオプションです。
-AGVが軌道を処理できない場合、マスター制御は車両に軌道を送信しない。
+AGVが軌道を処理できない場合、マスターコントロールは車両に軌道を送信しない。
 
 AGVは、必要なオプションパラメータをAGV `factsheet`メッセージで通信する。
 
@@ -383,81 +383,81 @@ serialNumber | string | AGVのシリアル番号。
 
 ## 6.5 通信トピック
 
-AGVプロトコルでは、マスター制御とAGV間の情報交換に以下のトピックを使用する。
+AGVプロトコルでは、マスターコントロールとAGV間の情報交換に以下のトピックを使用する。
 
 トピック名 | 公開者 | 購読者 | 用途 | 実装 | スキーマ
 ---|---|---|---|---|---
-order|マスター制御|AGV|マスター制御からAGVへの運転命令の通信|必須|order.schema
-instantActions | マスター制御 | AGV | 即座に実行されるアクションの通信 | 必須 |instantActions.schema
-state | AGV | マスター制御 | AGVの状態の通信 | 必須 | state.schema
+order|マスターコントロール|AGV|マスターコントロールからAGVへの運転命令の通信|必須|order.schema
+instantActions | マスターコントロール | AGV | 即座に実行されるアクションの通信 | 必須 |instantActions.schema
+state | AGV | マスターコントロール | AGVの状態の通信 | 必須 | state.schema
 visualization | AGV | 視覚化システム | 視覚化のみを目的とした位置情報を有する更新頻度の高いトピック | オプション | visualization.schema
-connection | ブローカー/AGV | マスター制御 | AGV接続が失われたことを示す。車両の状態を確認するためにマスター制御で使用しない。MQTTプロトコルの接続レベルチェック用に追加された | 必須 | connection.schema 
-factsheet | AGV | マスター制御 | マスター制御におけるAGVのセットアップを支援するパラメータまたはベンダー固有の情報 | 必須 | factsheet.schema
+connection | ブローカー/AGV | マスターコントロール | AGV接続が失われたことを示す。車両の状態を確認するためにマスターコントロールで使用しない。MQTTプロトコルの接続レベルチェック用に追加された | 必須 | connection.schema 
+factsheet | AGV | マスターコントロール | マスターコントロールにおけるAGVのセットアップを支援するパラメータまたはベンダー固有の情報 | 必須 | factsheet.schema
 
 
-## 6.6 Topic: "order" (from master control to AGV)
+## 6.6 トピック："order"（マスターコントロールからAGVへの）
 
-The topic "order" is the MQTT topic via which the AGV receives a JSON encapsulated order.
+"order"トピックは、AGVがJSON形式でカプセル化された注文を受信するMQTTトピックです。
 
 
-### 6.6.1 Concept and logic
+### 6.6.1 概念とロジック
 
-The basic structure of an order is a graph of nodes and edges.
-The AGV is expected to traverse the nodes and edges to fulfill the order.
-The full graph of all connected nodes and edges is held by master control.
+注文の基本構造は、ノードとエッジのグラフである。
+AGVは、注文を履行するために、ノードとエッジを横断することが期待される。
+すべての接続されたノードとエッジの完全なグラフは、マスタ制御によって保持される。
 
-The graph representation in the master control contains restrictions, e.g., which AGV is allowed to traverse which edge.
-These restrictions will not be communicated to the AGV.
-The master control only includes edges in an AGV order which the concerning AGV is allowed to traverse.
+マスタ制御のグラフ表現には、例えば、どのAGVがどのエッジを横断することが許可されているかなどの制限が含まれている。
+これらの制限はAGVに通知されない。
+マスターコントロールには、該当するAGVが通過することが許可されているエッジのみが含まれる。
 
 ![Figure 3 Graph representation in master control and graph transmitted in orders](./assets/graph_representation_transmission.png)
->Figure 3 Graph representation in master control and graph transmitted in orders
+>図3 マスターコントロールのグラフ表現とオーダーで送信されるグラフ
 
-The nodes and edges are passed as two lists in the order message.
-The order of the nodes and edges within those lists also governs in which sequence the nodes and edges shall be traversed.
+ノードとエッジは、2つのリストとしてオーダーメッセージで渡される。
+これらのリスト内のノードとエッジの順序は、ノードとエッジが走査される順序も決定する。
 
-For a valid order, there shall be at least one node and the number of edges shall be equal to the number of nodes minus one.
+有効な順序では、少なくとも1つのノードが存在し、エッジの数はノードの数から1を引いた数と等しくなければならない。
 
-The first node of an order shall be trivially reachable for the AGV.
-This means either that the AGV is already standing on the node, or that the AGV is in the node's deviation range.
+順序の最初のノードは、AGVが簡単に到達できるものでなければならない。
+これは、AGVがすでにそのノード上に存在しているか、またはAGVがそのノードの偏差範囲内にあることを意味する。
 
-Nodes and edges both have a boolean attribute `released`.
-If a node or edge is released, the AGV is expected to traverse it.
-If a node or edge is not released, the AGV shall not traverse it.
+ノードとエッジには、ブール値の属性`released`があります。
+ノードまたはエッジがリリース済みの場合、AGVはそれを横断することが期待される。
+ノードまたはエッジがリリースされていない場合、AGVはそれを横断しません。
 
-An edge can be released only if both the start and the end node of the edge are released.
+エッジは、その始点と終点の両方のノードがリリースされている場合にのみリリースすることができる。
 
-After an unreleased edge, no released nodes or edges can follow in the sequence.
+未解放のエッジの後に、解放済みのノードまたはエッジを配置することはできない。
 
-The set of released nodes and edges are called the "base".
-The set of unreleased nodes and edges are called the "horizon".
+解放済みのノードとエッジのセットは「ベース」と呼ばれる。
+未解放のノードとエッジのセットは「ホライズン」と呼ばれる。
 
-It is valid to send an order without a horizon.
+ホライズンなしでオーダーを送信することは有効です。
 
-An order message does not necessarily describe the full transport order.
-For traffic control and to accommodate resource constrained vehicles, the full transport order (which might consist of many nodes and edges) can be split up into many sub-orders, which are connected via their `orderId` and `orderUpdateId`.
-The process of updating an order is described in the next section.
+注文メッセージは、必ずしも完全な輸送順序を記述しているとは限りません。
+トラフィック制御やリソースに制約のある車両への対応のため、完全な輸送順序（多数のノードやエッジで構成される場合もあります）を多数のサブ順序に分割し、それらを `orderId` および `orderUpdateId` によって接続することができます。
+注文の更新プロセスについては、次のセクションで説明します。
 
 
-### 6.6.2 Orders and order update
+### 6.6.2 注文と注文の更新
 
-To support traffic management, master control can split the path communicated via order into two parts:
+トラフィック管理をサポートするために、マスターコントロールは注文によって伝達された経路を2つの部分に分割することができる。
 
-- *"Base"*: This is the defined route that the AGV is allowed to travel. All nodes and edges of the base route have already been released by the master control for the vehicle. The last node of the base is called decision point.
-- *"Horizon"*: This is the route currently planned by master control for the AGV to travel after the decision point. The horizon route has not yet been released by the master control.
+- *「ベース」*：これはAGVが走行することを許可された定義済みのルートである。ベースルートのすべてのノードとエッジは、車両用にマスターコントロールによってすでにリリースされている。ベースの最後のノードは決定ポイントと呼ばれる。
+- *「ホライズン」*：これは、決定ポイント以降にAGVが走行するよう、マスターコントロールによって現在計画されているルートである。ホライズンルートは、マスターコントロールによってまだリリースされていない。
 
-The AGV shall stop at the decision point if no further nodes and edges are added to the base. In order to ensure a fluent movement, the master control should extend the base before the AGV reaches the decision point, if the traffic situation allows for it.
+ベースに追加のノードやエッジが追加されない場合、AGVは決定ポイントで停止する。円滑な移動を確保するため、交通状況が許す場合、AGVが決定ポイントに到達する前に、マスターコントロールがベースを拡張する必要がある。
 
-Since MQTT is an asynchronous protocol and transmission via wireless networks is not reliable, the base cannot be changed. The master control shall therefore assume that the base has already been executed by the AGV. A later section describes a procedure to cancel an order, but this is also considered unreliable due to the communication limitations mentioned above.
+MQTTは非同期プロトコルであり、無線ネットワークを介した通信は信頼性が低いため、ベースは変更できない。したがって、マスターコントロールは、ベースはすでにAGVによって実行済みであると想定する。後述のセクションでは、注文をキャンセルする手順について説明するが、これも前述の通信制限により信頼性が低いと考えられる。
 
-The master control has the possibility to change the horizon by sending an updated route to the AGV which includes the changed list of nodes and edges. The procedure for changing the horizon route is shown in Figure 4.
+マスターコントロールは、変更されたノードとエッジのリストを含む更新されたルートをAGVに送信することで、ホライズンを変更することができる。ホライズンルートの変更手順は、図4に示されている。
 
 ![Figure 4 Procedure for changing the driving route "Horizon"](./assets/driving_route_horizon.png)
->Figure 4 Procedure for changing the driving route "Horizon"
+>図4 運転ルート「ホライズン」変更手順
 
-In Figure 4, an initial job is first sent by the control panel at time t = 1.
-Figure 5 shows the pseudocode of a possible job.
-For the sake of readability, a complete JSON example has been omitted here.
+図4では、時刻t=1にコントロールパネルから最初のジョブが送信される。
+図5は、可能なジョブの擬似コードを示している。
+読みやすさを考慮し、完全なJSONの例はここでは省略されている。
 
 ```
 {
@@ -478,12 +478,12 @@ For the sake of readability, a complete JSON example has been omitted here.
 	]
 }
 ```
->Figure 5 Pseudocode of an order.
+>図5 注文の擬似コード
 
-At time t = 3, the order is updated by sending an extension of the order (see example in Figure 6).
-Note that the `orderUpdateId` is incremented and that the first node of the order update corresponds to the last shared base node of the previous order message.
+時刻 t = 3 で、注文の更新が注文の拡張を送信することで行われる（図6の例を参照）。
+`orderUpdateId` がインクリメントされ、注文更新の最初のノードが、前の注文メッセージの最後の共有ベースノードに対応していることに注目すること。
 
-This ensures that the AGV can also perform the order update, i.e., that the first node of the job update is reachable by executing the edges already known to the AGV.
+これにより、AGVが注文更新も実行できることが保証される。すなわち、AGVがすでに認識しているエッジを実行することで、ジョブ更新の最初のノードに到達できることが保証される。
 
 ```
 {
@@ -502,331 +502,331 @@ This ensures that the AGV can also perform the order update, i.e., that the firs
 	]
 }
 ```
->Figure 6 Pseudocode of an order update. Note the change of the `orderUpdateId`.
+>図6 注文更新の擬似コード - `orderUpdateId` の変更に注目すること。
 
-This also aids in the event that an order update is lost (e.g., due to an unreliable wireless network).
-The AGV can always check that the last known base node has the same `nodeId` (and `nodeSequenceId`, more on that later) as the first new base node.
+また、これは、注文の更新が失われた場合（例えば、信頼性の低いワイヤレスネットワークが原因）にも役立つ。
+AGVは、常に最後の既知のベースノードが最初の新しいベースノードと同じ `nodeId`（および `nodeSequenceId`、これについては後述）を持っていることを確認できる。
 
-Also note that node g is the only base node that is sent again.
-Since the base cannot be changed, a retransmission of nodes f and d is not valid.
+また、ノードgのみが再度送信されるベースノードである点にも注目すること。
+ベースは変更できないため、ノードfとdの再送信は無効である。
 
-It is important, that the contents of the stitching node (node g in the example case) are not changed.
-For actions, deviation range, etc., the AGV shall use the instructions provided in the first order (Figure 5, orderUpdateId 0).
+ステッチングノード（例ではノードg）の内容が変更されないことが重要である。
+アクション、偏差範囲などについては、AGVは最初のオーダー（図5、orderUpdateId 0）で提供された指示を使用する。
 
 ![Figure 7 Regular update process - order extension](./assets/update_order_extension.png)
->Figure 7 Regular update process - order extension.
+>図7 定期更新プロセス - 注文延長。
 
-Figure 7 describes how an order should be extended.
-It shows the information that is currently available on the AGV.
-The `orderId` stays the same and the `orderUpdateId` is incremented.
+図7は、注文がどのように拡張されるかを説明している。
+これは、現在AGV上で利用可能な情報を示している。
+`orderId`は同じまま、`orderUpdateId`はインクリメントされる。
 
-The last node of the previous base is the first base node in the updated order.
-With this node the AGV can add the updated order onto the current order (stitching).
-The other nodes and edges from the previous base are not resent.
+前のベースの最後のノードは、更新された注文の最初のベースノードである。
+このノードを使用して、AGVは現在の注文に更新された注文を追加することができる（ステッチング）。
+前のベースからの他のノードとエッジは再送信されない。
 
-Master control has the option to make changes to the horizon by sending entirely different nodes as the new base.
-The horizon can also be deleted.
+マスターコントロールは、まったく異なるノードを新しいベースとして送信することで、ホライズンに変更を加えるオプションがある。
+また、ホライズンを削除することもできる。
 
-To allow loops in orders (like going from node a to b and then back to a) a `sequenceId` is assigned to the node and edge objects.
-This `sequenceId` runs over the nodes and edges (first node of an order receives a 0, the first edge then gets the 1, the second node then gets the 2, and so on).
-This allows for easier tracking of the order progress.
+注文にループ（ノードaからbへ行き、その後aに戻るなど）を許可するには、ノードおよびエッジオブジェクトに`sequenceId`が割り当てられる。
+この `sequenceId` は、ノードとエッジに順に割り当てられる（注文の最初のノードには 0、最初のエッジには 1、2番目のノードには 2、以下同様）。
+これにより、注文の進行状況をより簡単に追跡できるようになる。
 
-Once a `sequenceId` is assigned, it does not change with order updates (see Figure 7).
-This is necessary to determine on AGV side to which node the master control refers to.
+一度 `sequenceId` が割り当てられると、注文の更新では変更されない（図7を参照）。
+これは、AGV側で、マスターコントロールがどのノードを参照しているかを判断するために必要である。
 
-Figure 8 describes the process of accepting an order or order update.
+図8は、注文または注文更新の受け付けプロセスを説明している。
 
 ![Figure 8 The process of accepting an order or orderUpdate](./assets/process_order_update.png)
->Figure 8 The process of accepting an order or order update.
+>図8 注文の受注または注文の更新のプロセス
 
-1)	**is received order valid?**:
-All formatting and JSON data types are correct?
+1)	**受け取った注文は有効か？**:
+すべての書式およびJSONデータタイプは正しい？
 
-2)	**is received order new or an update of the current order?**:
-Is `orderId` of the received order different to `orderId` of order the vehicle currently holds?
+2)	**新しい注文か、現在の注文の更新か？**:
+受け取った注文の `orderId` は、車両が現在保持している注文の `orderId` と異なるか？
 
-3)	**is vehicle still executing an order or waiting for an update?**:
-Are `nodeStates` not empty or are `actionStates` containing states which are neither 'FAILED' nor 'FINISHED'? Nodes and edges and the corresponding action states of the order horizon are also included inside the state. Vehicle might still have a horizon and therefore waiting for an update and executing an order.
+3)	**車両はまだ命令を実行中か、それとも更新を待っているか？**:
+`nodeStates` が空ではないか、または `actionStates` が 'FAILED' でも 'FINISHED' でもない状態を含んでいるか？ ノード、エッジ、およびオーダーホライズンの対応するアクション状態も状態に含まれる。 車両はまだホライズンを持っている可能性があり、そのため更新を待機し、オーダーを実行している可能性がある。
 
-4) **is start of new order close enough to current position?**:	Is the vehicle already standing on the node, or is it in the node's deviation range (see Section [6.6.1 Concept and logic](#661-concept-and-logic))?
+4) **現在の位置に対して新しい注文の開始位置は十分近いか？**:	車両はすでにノード上に存在しているのか、それともノードの偏差範囲内にあるのか（セクション[6.6.1 概念とロジック](#661-概念とロジック)を参照）。
 
-5) **is received order update deprecated?**: Is `orderUpdateId` smaller than the one currently on the vehicle?
+5) **受け取った注文の更新は非推奨か？**: `orderUpdateId`は現在車両に搭載されているものよりも小さいですか？
 
-6)	**is received order update currently on vehicle?**: Is `orderUpdateId` equal to the one currently on the vehicle?
+6)	**車両に現在、注文更新が受信されているか？**: `orderUpdateId`は現在車両に搭載されているものと同一か？
 
-7)	**is the received update a valid continuation of the currently still running order?**:	Is the first node of the received order equal to the current decision point (last node of the current base)? The vehicle is still moving or executing actions related to the base released in previous order updates or still has a horizon and is therefore waiting for a continuation of the order. In this case, the order update is only accepted if the first node of the new base is equal to the last node of the previous base.
+7)	**受信した更新は、現在も継続中の注文の有効な継続であるか？**:	受信した注文の最初のノードは、現在の決定ポイント（現在のベースの最後のノード）と等しいか？車両は、以前の注文更新でリリースされたベースに関連する動作をまだ実行中、またはホライズンを保有しているため、注文の継続を待機している状態です。この場合、新しいベースの最初のノードが、前のベースの最後のノードと等しい場合にのみ、注文更新が受け入れられる。
 
-8)	**is the received update a valid continuation of the previously completed order?**: Are `nodeId` and `sequenceId` of the first node of the received order update equal to `lastNodeId` and `lastNodeSequenceId`? The vehicle is not executing any actions anymore neither is it waiting for a continuation of the order (meaning that it has completed its base with all related actions and does not have a horizon). The order update is now accepted if it continues from the last traversed node, therefore the first node of the new base needs to match the vehicle's `lastNodeId` as well as `lastNodeSequenceId`.
+8)	**受信した更新は、以前に完了した注文の有効な継続であるか？**: 受信した注文更新の最初のノードの `nodeId` と `sequenceId` が、`lastNodeId` と `lastNodeSequenceId` に等しいか？車両はもはや何もアクションを実行せず、また注文の継続を待つこともない（つまり、関連するすべてのアクションを完了し、ホライズンを持たないことを意味する）。注文の更新は、最後に横断したノードから継続する場合は受け入れられるため、新しいベースの最初のノードは、車両の `lastNodeId` および `lastNodeSequenceId` と一致する必要がある。
 
-9)	populate/append states refers to the `actionStates`/`nodeStates`/`edgeStates`.
+9)	populate/append statesは、`actionStates`/`nodeStates`/`edgeStates`を参照します。
 
 
-### 6.6.3 Order cancellation (by master control)
+### 6.6.3 注文キャンセル（マスターコントロールによる）
 
-In the event of an unplanned change in the base nodes, the order shall be canceled by using the instantAction `cancelOrder`.
+ベースノードに予定外の変更が生じた場合は、instantAction `cancelOrder` を使用して注文をキャンセルする。
 
-After receiving the instantAction `cancelOrder`, the vehicle stops (based on its capabilities, e.g., right where it is or on the next node).
+instantAction `cancelOrder` を受信すると、車両は停止する（車両の能力に基づいて、例えば、その場で、あるいは次のノードで）。
 
-If there are actions scheduled, these actions shall be cancelled and report 'FAILED' in their `actionState`.
-If there are running actions, those actions should be cancelled and also be reported as 'FAILED'.
-If the action cannot be interrupted, the `actionState` of that action should reflect that by reporting 'RUNNING' while it is running, and after that the respective state ('FINISHED', if successful and 'FAILED', if not).
-While actions are running, the cancelOrder action shall report 'RUNNING', until all actions are cancelled/finished.
-After all movement of the vehicle and all of its actions are stopped, the `cancelOrder` action status shall report 'FINISHED'.
+スケジュールされたアクションがある場合は、それらのアクションをキャンセルし、`actionState` に'FAILED'と報告する。
+実行中のアクションがある場合は、それらのアクションをキャンセルし、'FAILED'と報告しなければならない。
+アクションを中断できない場合は、そのアクションの `actionState` は実行中には「RUNNING」を報告し、その後はそれぞれの状態（成功した場合は'FINISHED'、失敗した場合は'FAILED'）を報告することで、それを反映しなければならない。
+アクションが実行されている間、cancelOrderアクションは、すべてのアクションがキャンセルまたは終了するまで'RUNNING'と報告する。
+車両のすべての動作とアクションが停止した後、`cancelOrder`アクションの状態は'FINISHED'と報告する。
 
-The `orderId` and `orderUpdateId` are kept.
+orderIdとorderUpdateIdは保持される。
 
-Figure 9 shows the expected behavior for different AGV capabilities.
+図9は、AGVのさまざまな能力に対する期待される動作を示している。
 
 ![Figure 9 Expected behavior after a cancelOrder](./assets/process_cancel_order.png)
->Figure 9 Expected behavior after a `cancelOrder`.
+>図 9 `cancelOrder`を受け取ったときに期待される動作.
 
 
-#### 6.6.3.1 Receiving a new order after cancellation
+#### 6.6.3.1 キャンセル後の新規注文の受理
 
-After the cancellation of an order, the vehicle shall be in a state to receive a new order.
+注文がキャンセルされた後、車両は新たな注文を受けられる状態になければならない。
 
-In the case of an AGV that localizes itself on nodes via a tag, the new order has to begin on the node the AGV is now standing on (see also Figure 5).
+タグによってノードに位置を特定するAGVの場合、新たな注文はAGVが現在立っているノードから開始しなければならない（図5も参照）。
 
-In case of an AGV that can stop in between nodes, the choice is up to master control how the next order should be started.
-The AGV shall accept both methods.
+ノードの間に停止できるAGVの場合、次の注文をどのように開始するかは、マスタ制御によって選択される。
+AGVは両方の方法を受け入れなければならない。
 
-There are two options:
+2つのオプションがあります。
 
-- Send an order, where the first node is a temporary node that is positioned where the AGV currently stands. The AGV shall then realize that this node is trivially reachable and accept the order.
-- Send an order, where the first node is the last traversed node of the previous order but set the deviation range so large that the AGV is within this range. Thus, the AGV shall realize that this node shall be counted as traversed and accept the order.
-
-
-#### 6.6.3.2 Receiving a cancelOrder action when AGV has no order
-
-If the AGV receives a `cancelOrder` action but, the AGV currently has no order, or the previous order was canceled, the `cancelOrder` action shall be reported as 'FAILED'.
-
-The AGV shall report a "noOrderToCancel" error with the `errorLevel` set to 'WARNING'.
-The `actionId` of the `instantAction` shall be passed as an `errorReference`.
+- 最初のノードをAGVが現在位置する仮のノードとして、オーダーを送信する。AGVは、このノードが簡単に到達可能であることを認識し、オーダーを受け入れる。
+- 最初のノードは前回の注文の最後の通過ノードですが、偏差範囲を大きく設定し、AGVがその範囲内に収まるようにする。これにより、AGVは、このノードを通過したと認識し、注文を受け入れる。
 
 
-### 6.6.4 Order rejection
+#### 6.6.3.2 AGVに注文がない場合のcancelOrderアクションの受信
 
-There are several scenarios, when an order shall be rejected.
-These scenarios are shown in Figure 8 and described below.
+AGVが「cancelOrder」アクションを受信したが、AGVに現在注文がない場合、または以前の注文がキャンセルされた場合、`cancelOrder`アクションは`FAILED`として報告される。
 
-
-#### 6.6.4.1 Vehicle gets a malformed new order
-
-Resolution:
-
-1. Vehicle does NOT take over the new order in its internal buffer.
-2. The vehicle reports the warning "validationError"
-3. The warning shall be reported until the vehicle has accepted a new order.
+AGVは"noOrderToCancel"エラーを'WARNING'に設定した`errorLevel`とともに報告する。
+`instantAction`の`actionId`は`errorReference`として渡されます。
 
 
-#### 6.6.4.2 Vehicle receives an order with actions it cannot perform or with fields that it cannot use
+### 6.6.4 注文の拒否
 
-Examples:
-
-- Non-executable actions: lifting height higher than maximum lifting height, lifting actions although no stroke is installed, etc.
-- Non-useable fields: trajectory, etc.
-
-Resolution:
-
-1. Vehicle does NOT take over the new order in its internal buffer
-2. Vehicle reports the warning "orderError" with the wrong fields as error references
-3. The warning shall be reported until the vehicle has accepted a new order.
+注文が拒否される状況はいくつかある。
+これらの状況は図8に示されており、以下に説明されている。
 
 
-#### 6.6.4.3 Vehicle gets a new order with the same orderId, but a lower orderUpdateId than the current orderUpdateId
+#### 6.6.4.1 車両が不正な新規注文を取得する
 
-Resolution:
+解決策：
 
-1. Vehicle does NOT take over the new order in its internal buffer.
-2. Vehicle keeps the previous order in its buffer.
-3. The vehicle reports the warning "orderUpdateError"
-4. The vehicle continues with executing the previous order.
+1. 車両は新規注文を内部バッファに引き継がない。
+2. 車両は「validationError」という警告を報告する。
+3. 車両が新規注文を受け入れるまで、この警告が報告される。
 
-If the AGV receives an order with the same `orderId` and `orderUpdateId` twice, the second order will be ignored. 
-This might happen, if the master control resends the order because the state message was received too late by master control and it could therefore not verify that the first order had been received.
+
+#### 6.6.4.2 車両が実行できないアクションまたは使用できないフィールドを含む注文を受け取る
+
+例：
+
+- 実行不可能なアクション：最大リフト高を超えるリフト高、ストロークが設置されていないにもかかわらずリフト動作など
+- 使用不可能なフィールド：軌道など
+
+解決策：
+
+1. 車両は、新しい注文を内部バッファに引き継がない。
+2. 車両は、誤ったフィールドをエラー参照として警告「orderError」を報告する。
+3. 警告は、車両が新しい注文を受け入れるまで報告されるものとする。
+
+
+#### 6.6.4.3 車両が同じorderIdで、現在のorderUpdateIdよりも小さいorderUpdateIdを持つ新規注文を取得
+
+解決策：
+
+1. 車両は新規注文を内部バッファに引き継がない。
+2. 車両は以前の注文をバッファに保持する。
+3. 車両は「orderUpdateError」という警告を報告する。
+4. 車両は以前の注文の実行を継続する。
+
+AGVが同じ `orderId` と `orderUpdateId` を持つ注文を2回受信した場合、2番目の注文は無視される。
+これは、ステートメッセージがマスターコントロールに遅れて受信されたため、最初の注文が受信されたことを確認できなかった場合に、マスターコントロールが注文を再送信した場合に発生する可能性がある。
 
 ### 6.6.5 Corridors
 
-The optional `corridor` edge attribute allows the vehicle to deviate from the edge trajectory for obstacle avoidance and defines the boundaries within which the vehicle is allowed to operate.
-To use the `corridor` attribute, a predefined trajectory is required that the vehicle would follow if no `corridor` attribute was defined. This can be either the trajectory defined on the vehicle known to the master control or the trajectory sent in an order. The behavior of a vehicle using the `corridor` attribute is still the behavior of a line-guided vehicle, except that it's allowed to temporarily deviate from a trajectory to avoid obstacles.
+オプションの `corridor` エッジ属性は、障害物を回避するために車両がエッジ軌道から逸脱することを許可し、車両が動作することを許可する境界を定義する。
+`corridor`属性を使用するには、`corridor`属性が定義されていない場合に車両が従うことになる、あらかじめ定義された軌道が必要である。これは、マスターコントロールで認識されている車両で定義された軌道、または命令で送信された軌道のいずれかになる。`corridor`属性を使用する車両の動作は、障害物を回避するために一時的に軌道から逸脱することが許可されていることを除いて、依然としてラインガイド車両の動作である。
 
-*Remark:
-An edge inside an order defines a logical connection between two nodes and not necessarily the (real) trajectory that a vehicle follows when driving from the start node to the end node.
-Depending on the vehicle type, the trajectory that a vehicle takes between the start and end nodes is either defined by master control via the trajectory edge attribute or assigned to the vehicle as a predefined trajectory.
-Depending on the internal state of the vehicle, the selected trajectory may vary.*
+*注記：*
+*オーダー内のエッジは、2つのノード間の論理的な接続を定義するものであり、車両が開始ノードから終了ノードまで走行する際にたどる（実際の）軌道であるとは限りません。*
+*車両の種類に応じて、開始ノードと終了ノードの間の車両の軌道は、軌道エッジ属性を介してマスター制御によって定義されるか、または車両に事前定義の軌道として割り当てられます。*
+*車両の内部状態に応じて、選択される軌道は異なります。*
 
 ![Figure 10 Edges with corridor attribute.](./assets/edges_with_corridors.png)
->Figure 10 Edges with a `corridor` attribute that defines the left and right boundaries within which a vehicle is allowed to deviate from its predefined trajectory to avoid obstacles. On the left, the kinematic center defines the allowed deviation, while on the right, the contour of the vehicle, possibly extended by the load, defines the allowed deviation. This is defined by the `corridorRefPoint` parameter.
+>図10 障害物を避けるために車両が予め設定された軌道から逸脱することが許される左右の境界を定義する「corridor」属性を持つエッジ。左側では、運動中心が許容される逸脱を定義し、右側では、荷重により拡張されるかもしれない車両の輪郭が許容される逸脱を定義する。これは`corridorRefPoint`パラメータによって定義される。
 
-The area in which the vehicle is allowed to navigate independently (and deviate from the original edge trajectory) is defined by a left and a right boundary.
-The optional `corridorRefPoint` field specifies whether the vehicle control point or the vehicle contour should be inside the defined boundary.
-The boundaries of the edges shall be defined in such a way that the vehicle is inside the boundaries of the new and now current edge as soon as it passes a node.
-Instead of setting the corridor boundaries to zero, master control shall not use the `corridor` attribute if the vehicle shall not deviate from the trajectory.
+車両が単独で走行（元のエッジ軌道から逸脱）することが許可される領域は、左右の境界によって定義される。
+オプションの `corridorRefPoint` フィールドは、車両の制御点または車両の輪郭が定義された境界の内側にあるべきかどうかを指定する。
+エッジの境界は、車両がノードを通過すると同時に、新しいエッジと現在のエッジの境界の内側になるように定義される。
+車両が軌道から逸脱しない場合は、corridor境界をゼロに設定する代わりに、マスターコントロールは`corridor`属性を使用しない。
 
-The vehicle's motion control software shall constantly check that the vehicle is within the defined boundaries.
-If not, the vehicle shall stop because it is out of the allowed navigation space and report an error.
-The master control can decide if user interaction is required or if the vehicle can continue by canceling the current order and sending a new order to the vehicle with corridor information that allows the vehicle to move again.
+車両のモーション制御ソフトウェアは、車両が定義された境界内に常に収まっていることを確認する。
+収まっていない場合は、車両は許容されたナビゲーション空間から外れているため停止し、エラーを報告する。
+マスター制御は、ユーザーとの対話が必要かどうか、または車両が現在の命令を取り消して、車両が再び移動できるcorridor情報を含む新しい命令を車両に送信することで、車両が走行を継続できるかどうかを決定できる。
 
-*Remark: Allowing the vehicle to deviate from the trajectory increases the possible footprint of the vehicle during driving. This circumstance shall be considered during initial operation, and if the master control makes a traffic control decision based on the vehicle's footprint.*
+*注記：車両が軌道から逸脱することを許可すると、走行中の車両のフットプリントが大きくなる可能性がある。この状況は初期運用時に考慮すべきであり、マスターコントロールが車両のフットプリントに基づいて交通制御の決定を下す場合がある。*
 
-See also Section [6.10.2 Traversal of nodes and entering/leaving edges](#6102-traversal-of-nodes-and-enteringleaving-edges-triggering-of-actions) for further information.
+セクション[6.10.2 ノードの横断とエッジへの進入/退出](#6102-traversal-of-nodes-and-enteringleaving-edges-triggering-of-actions)も参照すること。
 
 
-## 6.6.6 Implementation of the order message
+## 6.6.6 注文メッセージの実装
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
-headerId | | uint32 | Header ID of the message.<br> The header ID is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
-timestamp | | string | Timestamp (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z")
-version | | string | Version of the protocol [Major].[Minor].[Patch] (e.g., 1.3.2)
-manufacturer | | string | Manufacturer of the AGV
-serialNumber | | string | Serial number of the AGV
-orderId | | string | Order identification.<br> This is to be used to identify multiple order messages that belong to the same order.
-orderUpdateId | | uint32 | Order update identification.<br>Is unique per orderId.<br>If an order update is rejected, this field is to be passed in the rejection message.
-*zoneSetId* | | string | Unique identifier of the zone set, that the AGV has to use for navigation or that was used by master control for planning. <br> <br> Optional: Some master control systems do not use zones.<br> Some AGVs do not understand zones.<br> Do not add to message, if no zones are used.
-**nodes [node]** | | array | Array of node objects to be traversed for fulfilling the order. <br>One node is enough for a valid order. <br>Leave edge array empty in that case.
-**edges [edge]** | | array | Array of edge objects to be traversed for fulfilling the order. <br>One node is enough for a valid order. <br>Leave edge array empty in that case.
+headerId | | uint32 | メッセージのヘッダーID<br>ヘッダーIDはトピックごとに定義され、送信されるメッセージごとに1ずつインクリメントされます（受信時は必要ない）。
+timestamp | | string | タイムスタンプ (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z")
+version | | string | プロトコルのバージョン [メジャー].[マイナー].[パッチ] (例：1.3.2)
+manufacturer | | string | AGVのメーカ名
+serialNumber | | string | AGVのシリアル番号
+orderId | | string | 注文の識別子<br>これは、同一の注文に属する複数の注文メッセージを識別するために使用する。
+orderUpdateId | | uint32 | 注文更新識別子<br>orderIdごとに一意である。<br>注文更新が拒否された場合、このフィールドは拒否メッセージに渡される。
+*zoneSetId* | | string | AGVがナビゲーションに使用する、またはマスターコントロールが計画に使用したゾーンセットの固有の識別子<br> <br>オプション：一部のマスターコントロールシステムではゾーンを使用しない。br>一部のAGVはゾーンを理解しない。<br>ゾーンを使用しない場合は、メッセージに追加しないこと。
+**nodes [node]** | | array | 注文を履行するために巡回するノードオブジェクトの配列<br>有効な注文には1つのノードで十分である。<br>その場合はエッジ配列を空欄のままにしておく。
+**edges [edge]** | | array | 注文を履行するために巡回するエッジオブジェクトの配列<br>有効な注文には1つのノードで十分である。<br>その場合はエッジ配列を空欄のままにしておく。
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **node** { | | JSON object|
-nodeId | | string | Unique node identification
-sequenceId | | uint32 | Number to track the sequence of nodes and edges in an order and to simplify order updates. <br>The main purpose is to distinguish between a node, which is passed more than once within one orderId. <br>The variable sequenceId runs across all nodes and edges of the same order and is reset when a new orderId is issued.
-*nodeDescription* | | string | Additional information on the node
-released | | boolean | "true" indicates that the node is part of the base. <br> "false" indicates that the node is part of the horizon.
-***nodePosition*** | | JSON object | Node position. <br>Optional for vehicle types that do not require the node position (e.g., line-guided vehicles).
-**actions [action]** <br> } | | array | Array of actions to be executed on a node. <br>Empty array, if no actions required.
+nodeId | | string | 固有ノード識別子
+sequenceId | | uint32 | ノードとエッジのシーケンスを追跡し、注文の更新を簡素化するための番号<br>主な目的は、1つのorderId内で複数回渡されるノードを区別することである。<br>この変数sequenceIdは、同じ注文のすべてのノードとエッジにまたがって適用され、新しいorderIdが発行されるとリセットされる。
+*nodeDescription* | | string | ノードに関する追加情報
+released | | boolean | "true"は、ノードがベースの一部であることを示す。<br>"false"は、ノードがホライズンの一部であることを示す。
+***nodePosition*** | | JSON object | ノード位置 <br>ノード位置を必要としない車両タイプ（例：線路誘導車両）の場合はオプション。
+**actions [action]** <br> } | | array | ノード上で実行されるアクションの配列<br>アクションが不要な場合は空の配列。
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---| --- |--- | ---
-**nodePosition** { | | JSON object | Defines the position on a map in a global project-specific world coordinate system. <br>Each floor has its own map. <br>All maps shall use the same project-specific global origin.
-x | m | float64 | X-position on the map in reference to the map coordinate system. <br>Precision is up to the specific implementation.
-y | m | float64 | Y-position on the map in reference to the map coordinate system. <br>Precision is up to the specific implementation.
-*theta* | rad | float64 | Range: [-Pi ... Pi] <br><br>Absolute orientation of the AGV on the node.<br> Optional: vehicle can plan the path by itself.<br>If defined, the AGV has to assume the theta angle on this node.<br>If previous edge disallows rotation, the AGV shall rotate on the node.<br>If following edge has a differing orientation defined but disallows rotation, the AGV is to rotate on the node to the edges desired rotation before entering the edge.
-*allowedDeviationXY* | m | float64 | Indicates how precisely an AGV shall match the position of a node for it to be considered traversed. <br><br> If = 0.0: no deviation is allowed (no deviation means within the normal tolerance of the AGV manufacturer).<br><br> If > 0.0: allowed deviation radius in meters. <br>If the AGV passes a node within the deviation radius, the node can be considered traversed.
-*allowedDeviationTheta* | rad | float64 | Range: [0.0 ... Pi] <br><br> Indicates how precise the orientation defined in theta has to be met on the node by the AGV. <br>The lowest acceptable angle is theta - allowedDeviationTheta and the highest acceptable angle is theta + allowedDeviationTheta.
-mapId | | string | Unique identification of the map on which the position is referenced. <br> Each map has the same project-specific global origin of coordinates. <br>When an AGV uses an elevator, e.g., leading from a departure floor to a target floor, it will disappear off the map of the departure floor and spawn in the related lift node on the map of the target floor.
-*mapDescription* <br> } | | string | Additional information on the map.
+**nodePosition** { | | JSON object | グローバルなプロジェクト固有の世界座標系におけるマップ上の位置を定義する<br>各フロアには独自のマップがある。<br>すべてのマップは、同じプロジェクト固有のグローバル原点を使用する。
+x | m | float64 | マップ座標システムを参照するマップ上のX位置<br>精度は特定の実装に依存する。
+y | m | float64 | マップ座標システムを参照するマップ上のY位置<br>精度は特定の実装に依存する。
+*theta* | rad | float64 | 範囲: [-Pi ... Pi] <br><br>ノード上でのAGVの絶対方向<br>オプション：車両は自ら経路を計画できる。<br>定義されている場合、AGVはノード上のシータ角を想定しなければならない。<br>前のエッジが回転を禁止している場合、AGVはノード上で回転する。<br>次のエッジに異なる方向が定義されているが回転が禁止されている場合、AGVはエッジに進入する前に、ノード上でエッジの希望する方向に回転する。
+*allowedDeviationXY* | m | float64 | AGVがノードの位置にどれだけ正確に一致しなければならないかを示し、通過したと見なされる。 <br><br> If = 0.0: 偏差は許されない（偏差がないとは、AGVメーカーの通常の許容範囲内であることを意味する）。<br><br> If > 0.0: 許容される偏差半径（メートル単位）。 <br>AGVが偏差半径内でノードを通過した場合、そのノードは通過したと見なされる。
+*allowedDeviationTheta* | rad | float64 | 範囲: [0.0 ... Pi] <br><br> AGVがノードで満たさなければならない、thetaで定義された方向の正確さを示す。<br>許容可能な最小角度はtheta - allowedDeviationTheta、許容可能な最大角度はtheta + allowedDeviationThetaである。
+mapId | | string | 位置が参照されるマップの固有の識別<br>各マップには、プロジェクト固有のグローバル座標の原点が存在する。<br>AGVがエレベーターを使用する場合、例えば出発階から目的階へ移動する場合、AGVは出発階のマップ上から消え、目的階のマップ上の関連エレベーターノードに生成される。
+*mapDescription* <br> } | | string | 地図に関する追加情報
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
-**action** { | | JSON object | Describes an action that the AGV can perform.
-actionType | | string | Name of action as described in the first column of "Actions and Parameters". <br> Identifies the function of the action.
-actionId | | string | Unique ID to identify the action and map them to the actionState in the state. <br>Suggestion: Use UUIDs.
-*actionDescription* | | string | Additional information on the action
-blockingType | | string | Enum {'NONE', 'SOFT', 'HARD'}: <br> 'NONE': allows driving and other actions;<br>'SOFT': allows other actions but not driving;<br>'HARD': is the only allowed action at that time.
-***actionParameters [actionParameter]*** <br><br> } | | array | Array of actionParameter objects for the indicated action, e.g., "deviceId", "loadId", "external triggers". <br><br> An example implementation can be found in [7.2 Format of parameters](#72-format-of-parameters).
+**action** { | | JSON object | AGVが実行できるアクションを記述する。
+actionType | | string | "アクションとパラメータ"の最初の列に記載されているアクションの名前<br>アクションの機能を識別する。
+actionId | | string | アクションを識別し、状態のactionStateにマッピングするための一意のID<br>提案：UUIDを使用すること。
+*actionDescription* | | string | アクションに関する追加情報
+blockingType | | string | Enum {'NONE', 'SOFT', 'HARD'}: <br> 'NONE'：運転やその他の操作が可能。<br>'SOFT'：運転以外の操作は可能だが、運転は不可。<br>'HARD'：その時間帯に許可されているのはこの操作のみ。
+***actionParameters [actionParameter]*** <br><br> } | | array | 指定されたアクションのアクションパラメータオブジェクトの配列、例えば"deviceId"、"loadId"、"external triggers"など。 <br><br>実装例は、[7.2 パラメータの形式](#72-format-of-parameters)を参照してください。
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
-**edge** { | | JSON object | Directional connection between two nodes.
-edgeId | | string | Unique edge identification.
-sequenceId | | uint32 | Number to track the sequence of nodes and edges in an order and to simplify order updates. <br>The variable sequenceId runs across all nodes and edges of the same order and is reset when a new orderId is issued.
-*edgeDescription* | | string | Additional information on the edge.
-released | | boolean | "true" indicates that the edge is part of the base.<br>"false" indicates that the edge is part of the horizon. 
-startNodeId | | string | nodeId of first node within the order.
-endNodeId | | string | nodeId of the last node within the order.
-*maxSpeed* | m/s | float64 | Permitted maximum speed on the edge. <br>Speed is defined by the fastest measurement of the vehicle.
-*maxHeight* | m | float64 | Permitted maximum height of the vehicle, including the load, on the edge.
-*minHeight* | m | float64 | Permitted minimal height of the load handling device on the edge.
-*orientation* | rad | float64 | Orientation of the AGV on the edge. The value `orientationType` defines if it has to be interpreted relative to the global project-specific map coordinate system or tangential to the edge. In case of interpreted tangential to the edge, 0.0 denotes driving forwards and PI denotes driving backwards. <br>Example: orientation Pi/2 rad will lead to a rotation of 90 degrees.<br><br>If the AGV starts in a different orientation, rotate the vehicle on the edge to the desired orientation, if `rotationAllowed` is set to "true".<br>If `rotationAllowed` is "false", rotate before entering the edge.<br>If that is not possible, reject the order.<br><br>If no trajectory is defined, apply the rotation to the direct path between the two connecting nodes of the edge.<br>If a trajectory is defined for the edge, apply the orientation to the trajectory.
-*orientationType* | | string | Enum {'GLOBAL', 'TANGENTIAL'}: <br>'GLOBAL': relative to the global project-specific map coordinate system;<br>'TANGENTIAL': tangential to the edge.<br><br>If not defined, the default value is 'TANGENTIAL'.
-*direction* | | string | Sets direction at junctions for line-guided or wire-guided vehicles, to be defined initially (vehicle-individual).<br> Examples: "left", "right", "straight".
-*rotationAllowed* | | boolean | "true": rotation is allowed on the edge.<br>"false": rotation is not allowed on the edge.<br><br>Optional:<br>No limit, if not set.
-*maxRotationSpeed* | rad/s | float64| Maximum rotation speed<br><br>Optional:<br>No limit, if not set.
-***trajectory*** | | JSON object | Trajectory JSON object for this edge as NURBS. <br>Defines the path, on which the AGV should move between the start node and the end node of the edge.<br><br>Optional:<br>Can be omitted, if the AGV cannot process trajectories or if the AGV plans its own trajectory.
-*length* | m | float64 | Length of the path from the start node to the end node<br><br>Optional:<br>This value is used by line-guided AGVs to decrease their speed before reaching a stop position.
-***corridor*** | | JSON object | Definition of boundaries in which a vehicle can deviate from its trajectory, e.g., to avoid obstacles.<br>
-**action [action]**<br><br><br> } | | array | Array of actions to be executed on the edge. <br>Empty array, if no actions required. <br>An action triggered by an edge will only be active for the time that the AGV is traversing the edge which triggered the action. <br>When the AGV leaves the edge, the action will stop and the state before entering the edge will be restored.
+**edge** { | | JSON object | 2つのノード間の方向性のある接続
+edgeId | | string | 固有エッジ識別子
+sequenceId | | uint32 | ノードとエッジのシーケンスを追跡し、注文更新を簡素化するための番号<br>変数 sequenceId は同じ注文のすべてのノードとエッジにまたがって適用され、新しい orderId が発行されるとリセットされます。
+*edgeDescription* | | string | エッジに関する追加情報
+released | | boolean | "true"は、エッジがベースの一部であることを示す。<br>"false"は、エッジがホライズンの一部であることを示す。
+startNodeId | | string | 注文内の最初のノードのノードID
+endNodeId | | string | 注文内の最後のノードのノードID
+*maxSpeed* | m/s | float64 | エッジでの許容最大速度<br>速度は車両の最速の測定値によって定義されます。
+*maxHeight* | m | float64 | エッジ上での車両の最大許容高さ（積載物を含む）
+*minHeight* | m | float64 | エッジ上での荷役装置の最小許容高さ
+*orientation* | rad | float64 | AGVのエッジ上の方向。`orientationType`の値は、グローバルなプロジェクト固有のマップ座標系に対する相対値として解釈されるか、エッジに対する接線として解釈されるかを定義する。エッジに対する接線として解釈される場合、0.0は前進、PIは後進を意味する。<br>例：方向 Pi/2 rad は90度の回転を意味する。`rotationAllowed`が"true"に設定されている場合、AGVが異なる方向から開始した場合は、エッジ上で車両を希望の方向に回転させる。<br>`rotationAllowed`が"false" の場合は、エッジに進入する前に回転させる。<br>それが不可能な場合は、注文を拒否する。<br><br>軌道が定義されていない場合は、エッジの2つの接続ノード間の直接経路に方向を適用する。<br>エッジに軌道が定義されている場合は、その軌道に方向を適用する。
+*orientationType* | | string | Enum {'GLOBAL', 'TANGENTIAL'}: <br>'GLOBAL'：グローバルなプロジェクト固有のマップ座標系に対する相対値。<br>'TANGENTIAL'：エッジに対する接線。<br>定義されていない場合、デフォルト値は'TANGENTIAL'である。
+*direction* | | string | 線路誘導またはワイヤ誘導の車両が分岐点で進む方向を設定します。最初に定義します（車両個別）。<br>例： "left", "right", "straight".
+*rotationAllowed* | | boolean | "true": エッジで回転が許可される。<br>"false": エッジで回転が許可されない。<br><br>オプション:<br>設定されていない場合は制限なし。
+*maxRotationSpeed* | rad/s | float64| 最大旋回速度<br><br>オプション:<br>設定されていない場合、上限はない。
+***trajectory*** | | JSON object | このエッジのNURBSとしての軌道JSONオブジェクト<br>エッジの開始ノードと終了ノードの間でAGVが移動すべき経路を定義する。<br><br>オプション：<br>AGVが軌道を処理できない場合、またはAGVが独自の軌道を計画している場合は、省略できる。
+*length* | m | float64 | 開始ノードから終了ノードまでのパスの長さ<br><br>オプション：<br>この値は、停止位置に到達する前に速度を落とすために、誘導線に従うAGVで使用される。
+***corridor*** | | JSON object | 車両が軌道から逸脱できる境界の定義、例えば障害物を避ける場合など。<br>
+**action [action]**<br><br><br> } | | array | エッジ上で実行されるアクションの配列<br>アクションが不要な場合は空の配列。<br>エッジによってトリガーされたアクションは、AGVがそのアクションをトリガーしたエッジを横断している間のみ有効である。<br>AGVがエッジを離れると、アクションは停止し、エッジに入る前の状態が復元される。
 
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **trajectory** { | | JSON object |
-degree | | float64 | Range: [1.0 ... float64.max]<br><br>Degree of the NURBS curve defining the trajectory.<br><br>If not defined, the default value is 1.
-**knotVector [float64]** | | array | Range: [0.0 ... 1.0]<br><br>Array of knot values of the NURBS.<br><br>knotVector has size of number of control points + degree + 1.
-**controlPoints [controlPoint]**<br><br> } | | array | Array of controlPoint objects defining the control points of the NURBS, explicitly including the start and end point.
+degree | | float64 | 範囲: [1.0 ... float64.max]<br><br>軌道を定義するNURBS曲線の度合い<br><br>定義されていない場合は、デフォルト値は1である。
+**knotVector [float64]** | | array | 範囲: [0.0 ... 1.0]<br><br>NURBSのノット値の配列<br><br>knotVectorは制御点の数+次数+1のサイズである。
+**controlPoints [controlPoint]**<br><br> } | | array | NURBSの制御点を定義するcontrolPointオブジェクトの配列<br>開始点と終了点も明示的に含む。
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **controlPoint** { | | JSON object |
-x | | float64 | X-coordinate described in the world coordinate system.
-y | | float64 | Y-coordinate described in the world coordinate system.
-*weight* | | float64 | Range: [0.0 ... float64.max]<br><br>The weight of the control point on the curve.<br>When not defined, the default will be 1.0.
+x | | float64 | 世界座標系で表記されたX座標
+y | | float64 | 世界座標系で表記されたY座標
+*weight* | | float64 | 範囲: [0.0 ... float64.max]<br><br>カーブ上の制御点の重み<br>定義されていない場合、デフォルトは1.0となる。
 } | | |
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 ***corridor*** { | | JSON object |
-leftWidth | m | float64 | Range: [0.0 ... float64.max]<br>Defines the width of the corridor in meters to the left related to the trajectory of the vehicle (see Figure 13).
-rightWidth | m | float64 | Range: [0.0 ... float64.max]<br>Defines the width of the corridor in meters to the right related to the trajectory of the vehicle (see Figure 13).
-*corridorRefPoint* <br><br>**}**| | string | Defines whether the boundaries are valid for the kinematic center or the contour of the vehicle. If not specified the boundaries are valid to the vehicles kinematic center.<br> Enum { 'KINEMATICCENTER' , 'CONTOUR' }
+leftWidth | m | float64 | 範囲: [0.0 ... float64.max]<br>車両の軌跡に関連する左側の通路の幅をメートル単位で定義する（図13参照）。
+rightWidth | m | float64 | 範囲: [0.0 ... float64.max]<br>車両の軌跡に関連する右側の通路の幅をメートル単位で定義する（図13参照）。
+*corridorRefPoint* <br><br>**}**| | string | 境界が車両の運動中心または輪郭のどちらに対して有効であるかを定義する。指定されていない場合、境界は車両の運動中心に対して有効である。<br> Enum { 'KINEMATICCENTER' , 'CONTOUR' }
 
-### 6.7 Maps
+### 6.7 地図
 
-To ensure consistent navigation among different types of AGVs, the position is always specified in reference to the project-specific coordinate system (see Figure 11).
-For the differentiation between different levels of a site or location, a unique `mapId` is used.
-The map coordinate system is to be specified as a right-handed coordinate system with the z-axis pointing skywards.
-A positive rotation therefore is to be understood as a counterclockwise rotation.
-The vehicle coordinate system is also specified as a right-handed coordinate system with the x-axis pointing in the forward direction of the vehicle and the z-axis pointing upward. The vehicle reference point is defined as (0,0,0) in the vehicle reference frame, unless specified otherwise.
-This is in accordance with Section 2.11 in DIN ISO 8855.
+異なる種類のAGV間のナビゲーションの一貫性を確保するため、位置は常にプロジェクト固有の座標系を参照して指定される（図11を参照）。
+サイトや場所の異なるレベル間の区別には、固有の`mapId`が使用される。
+マップ座標系は、z軸が空を指す右手座標系として指定される。
+したがって、正の回転は反時計回りの回転と解釈される。
+車両座標系もまた、x軸が車両の進行方向を指し、z軸が上方向を指す右ねじれ座標系として指定される。車両の基準点は、特に指定のない限り、車両基準フレームにおいて (0,0,0) と定義される。
+これは、DIN ISO 8855 のセクション2.11 に準拠している。
 
 ![Figure 11 Coordinate system with sample AGV and orientation](./assets/coordinate_system_vehicle_orientation.png)
->Figure 11 Coordinate system with sample AGV and orientation
+>図11 サンプルAGVと方向を示す座標系
 
-The X, Y, and Z coordinates shall be given in meters. 
-The orientation shall be in radians and shall be within +Pi and –Pi.
+X、Y、Zの座標はメートル法で表記する。
+方向はラジアンで表記し、+Piと-Piの範囲内とする。
 
 ![Figure 12 Coordinate systems for map and vehicle](./assets/coordinate_system_vehicle_map.png)
->Figure 12 Coordinate systems for map and vehicle
+>図12 地図と車両の座標系
 
 
-### 6.7.1 Map distribution
+### 6.7.1 地図の配布
 
-To enable an automatic map distribution and intelligent management of restarting the vehicles if necessary, a standardized way to distribute maps is introduced.
+地図の自動配布と、必要に応じて車両を再起動するインテリジェントな管理を可能にするために、地図を配布するための標準化された方法が導入されている。
 
-The map files to be distributed are stored on a dedicated map server that is accessible by the vehicles. To ensure efficient transmission, each transmission should consist of a single file. If multiple maps or files are required, they should be bundled or packed into a single file. The process of transferring a map from the map server to a vehicle is a pull operation, initiated by the master control triggering a download command using an `instantAction`.
+配布される地図ファイルは、車両からアクセス可能な専用の地図サーバーに保存される。効率的な送信を確実に行うために、各送信は単一のファイルで構成される必要がある。複数の地図またはファイルが必要な場合は、それらを単一のファイルにバンドルまたはパックする必要がある。地図サーバから車両に地図を転送するプロセスはプル操作であり、マスターコントロールが`instantAction`を使用してダウンロードコマンドをトリガーすることで開始される。
 
-Each map is uniquely identified by a combination of a map identifier (field `mapId`) and a map version (field `mapVersion`). The map identifier describes a specific area of the vehicle's physical workspace, and the map version indicates updates to previous versions. Before accepting a new order, the vehicle shall check that there is a map on the vehicle for each map identifier in the requested order. It is the responsibility of the master control to ensure that the correct maps are activated to operate the vehicle.
+各地図は、地図識別子（フィールド`mapId`）と地図バージョン（フィールド`mapVersion`）の組み合わせによって一意に識別される。マップ識別子は車両の物理的な作業領域の特定のエリアを記述し、マップバージョンは以前のバージョンに対する更新を示す。新しい注文を受け入れる前に、車両は要求された注文の各マップ識別子に対して車両にマップがあることを確認する。車両を操作するために正しいマップが起動されていることを確認するのはマスターコントロールの責任である。
 
-In order to minimize downtime and make it easier for the master control to synchronize the activation of new maps, it is essential that maps are pre-loaded or buffered on the vehicles. The status of the maps on the vehicle can be accessed via the vehicle state channel. It's important to note that transferring a map to an AGV and then activating the map are different processes. To activate a pre-loaded map on a vehicle, the master control sends an instant action. In this case, any other map with the same map identifier but a different map version is automatically disabled. Maps can be deleted by the master control with another instant action. The result of this process is shown in the vehicle state.
+ダウンタイムを最小限に抑え、マスターコントロールによる新しいマップのアクティベーションの同期を容易にするには、車両に事前にマップをロードしておくか、バッファリングしておくことが不可欠である。車両上のマップの状態は、車両状態チャンネルを介してアクセスできる。ここで注意すべき点は、AGVにマップを転送することと、マップをアクティベートすることは、異なるプロセスであるということである。車両に事前にロードされたマップをアクティベートするには、マスターコントロールが即時アクションを送信する。この場合、同じマップ識別子で異なるバージョンの他のマップは自動的に無効になる。マップは、別の即時アクションによりマスターコントロールで削除することができます。このプロセスの結果は、車両の状態に表示される。
 
-The map distribution process is shown in Figure 13.
+マップ配布の流れは、図13に示されている。
 
 ![Figure 13 Map distribution process](./assets/map_distribution_process.png)
->Figure 13 Communication required between master control, AGV and map server to download, enable, and delete a map.
-
-#### 6.7.2 Maps in the vehicle state
-
-The `mapId` field in the `agvPosition` of the state represents the currently active map. Information about the maps available on a vehicle is presented in the `maps` array, which is a component of the state message. Each entry in this array is a JSON object consisting of the mandatory fields `mapId`, `mapVersion`, and `mapStatus`, which can be either 'ENABLED' or 'DISABLED'. An 'ENABLED' map can be used by the vehicle if necessary. A 'DISABLED' map shall not be used. The status of the download process is indicated by the current action not being completed. Errors are also reported in the state.
-
-Note that multiple maps with different `mapId` can be enabled at the same time. There can only be one version of maps with the same `mapId` enabled at a time. If the `maps` array is empty, this means that there are currently no maps available on the vehicle.
+>図13 マスターコントロール、AGV、マップサーバー間で、マップのダウンロード、有効化、削除を行うために必要な通信。
 
 
-#### 6.7.3 Map download
+#### 6.7.2 車両状態の地図
 
-The map download is triggered by the `downloadMap` instant action from the master control. This command contains the mandatory parameters `mapId` and `mapDownloadLink` under which the map is stored on the map server and which can be accessed by the vehicle.
+ステートの `agvPosition` の `mapId` フィールドは、現在アクティブなマップを表す。車両で利用可能なマップに関する情報は、ステートメッセージのコンポーネントである `maps` 配列に表示される。この配列の各エントリは、必須フィールドである `mapId`、`mapVersion`、および `mapStatus` から構成される JSON オブジェクトである。これらのフィールドは、'ENABLED' または 'DISABLED' のいずれかになる。'ENABLED'のマップは必要に応じて車両で使用することができる。'DISABLED'のマップは使用できない。ダウンロード処理の状態は、現在のアクションが完了していないことによって示される。エラーも状態に報告される。
 
-The AGV sets the `actionStatus` to 'RUNNING' as soon as it starts downloading the map file. If the download is successful, the `actionStatus` is updated to 'FINISHED'. If the download is unsuccessful, the status is set to 'FAILED'. Once the download has been successfully completed, the map shall be added to the array of `maps` in the state. Maps shall not be reported in the state, before they are ready to be enabled.
+異なる `mapId` を持つ複数のマップを同時に有効にできることに注意すること。同じ `mapId` を持つマップの有効なバージョンは、同時に1つだけである。 `maps` 配列が空の場合、車両で現在利用可能なマップがないことを意味する。
 
-It is important to ensure that the process of downloading a map does not modify, delete, enable, or disable any existing maps on the vehicle.
-The vehicle shall reject the download of a map with a `mapId` and `mapVersion` that is already on the vehicle. An error shall be reported, and the status of the instant action shall be set to 'FAILED'. The master control shall first delete the map on the vehicle and then restart the download.
+#### 6.7.3 地図のダウンロード
 
+マップのダウンロードは、マスターコントロールからのインスタントアクション`downloadMap`によって開始される。このコマンドには、マップサーバーに保存され、車両からアクセスされるマップの必須パラメータ`mapId`と`mapDownloadLink`が含まれている。
 
-#### 6.7.4 Enable downloaded maps
+AGVは、マップファイルのダウンロードを開始すると同時に、`actionStatus`を'RUNNING'に設定する。ダウンロードが成功すると、`actionStatus`は'FINISHED'に更新される。ダウンロードに失敗した場合は、ステータスが'FAILED'に設定される。ダウンロードが正常に完了すると、マップは状態の配列 `maps` に追加される。マップは、有効化できる状態になる前に状態に報告されてはならない。
 
-There are two ways to enable a map on a vehicle:
-
-1. **Master control enables map**: Use the `enableMap` instant action to set a map to 'ENABLED' on the vehicle. Other Versions of the same `mapId` with different `mapVersion` are set to 'DISABLED'.
-2. **Manually enable a map on the vehicle**: In some cases, it might be necessary to enable the maps on the vehicle directly. The result shall be reported in the vehicle state.
-
-It is the responsibility of the master control to ensure that the correct maps are activated on the vehicle when sending the corresponding `mapId` as part of a `nodePosition` in an order.
-If the vehicle is to be set to a specific position on a new map, the `initPosition` instant action is used.
+マップのダウンロード処理が、車両上の既存のマップを修正、削除、有効化、または無効化しないことを確認することが重要である。
+車両には、すでに車両に存在する `mapId` および `mapVersion` を持つ地図のダウンロードは拒否される。エラーが報告され、その時点でのアクションのステータスは'FAILED'に設定される。マスターコントロールは、まず車両上の地図を削除し、その後ダウンロードを再開する。
 
 
-#### 6.7.5 Delete maps on vehicle
-The master control can request the deletion of a specific map from a vehicle. This is done with the instant action `deleteMap`. When a vehicle runs out of memory, it should report this to the master control, which can then initiate the deletion of maps. The vehicle itself is not allowed to delete maps.
-After successfully deleting a map, it is important to remove that map's entry from the vehicle's array of maps in the vehicle state.
+#### 6.7.4 ダウンロードされた地図の有効化
+
+車両でマップを有効にするには、2つの方法がある。
+
+1. **マスターコントロールでマップを有効にする**：インスタントアクション`enableMap`を使用して、車両のマップを'ENABLED'に設定します。同じ`mapId`で`mapVersion`が異なる他のバージョンは、'DISABLED'に設定される。
+2. **車両でマップを手動で有効にする**：場合によっては、車両でマップを直接有効にする必要がある。結果は車両ステートで報告される。
+
+注文で `nodePosition` の一部として対応する `mapId` を送信する際には、車両に正しいマップがアクティブになっていることを確認することがマスターコントロールの責任となる。
+車両を新しいマップの特定の位置に設定する場合は、インスタントアクションの `initPosition` を使用する。
+
+#### 6.7.5 車両上地図の削除
+
+マスターコントロールは、特定のマップの削除を車両に要求することができる。これは即時アクションの `deleteMap` を使用して行う。車両のメモリが不足した場合は、マスターコントロールに報告し、マスターコントロールがマップの削除を開始する。車両自体がマップを削除することは許可されていない。
+マップの削除に成功した後、車両の状態における車両のマップの配列からそのマップのエントリを削除することが重要である。
 
 
 ## 6.8 Actions
@@ -1007,7 +1007,7 @@ Errors can pass references that help with finding the cause of the error via the
 
 ### 6.10.6 Implementation of the state message
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 headerId | | uint32 | Header ID of the message.<br> The headerId is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
 timestamp | | string | Timestamp (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z").
@@ -1036,7 +1036,7 @@ operatingMode | | string | Enum {'AUTOMATIC', 'SEMIAUTOMATIC', 'MANUAL', 'SERVIC
 ***information [info]*** | | array | Array of info objects. <br>An empty array indicates, that the AGV has no information. <br>This should only be used for visualization or debugging – it shall not be used for logic in master control.
 **safetyState** | | JSON object | Contains all safety-related information.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **map**{ | | JSON object|
 mapId | | string | ID of the map describing a defined area of the vehicle's workspace.
@@ -1044,7 +1044,7 @@ mapVersion | | string | Version of the map.
 *mapDescription* | | string | Additional information on the map.
 mapStatus <br>}| | string | Enum {'ENABLED', 'DISABLED'}<br>'ENABLED': Indicates this map is currently active / used on the AGV. At most one map with the same mapId can have its status set to 'ENABLED'.<br>'DISABLED': Indicates this map version is currently not enabled on the AGV and thus could be enabled or deleted by request.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **nodeState** { | JSON object | |
 nodeId | | string | Unique node identification.
@@ -1053,7 +1053,7 @@ sequenceId | | uint32 | sequence ID to discern multiple nodes with same nodeId.
 released| | boolean | "true" indicates that the node is part of the base.<br>"false" indicates that the node is part of the horizon.
 ***nodePosition***<br><br>}| | JSON object | Node position. <br>The object is defined in Section [6.6 Topic "order"](#66-topic-order-from-master-control-to-agv) <br>Optional: <br>Master control has this information. <br>Can be sent additionally, e.g., for debugging purposes.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **edgeState** { | | JSON object | |
 edgeId | | string | Unique edge identification.
@@ -1062,7 +1062,7 @@ sequenceId | | uint32 | sequence ID to differentiate between multiple edges with
 released | | boolean | "true" indicates that the edge is part of the base.<br>"false" indicates that the edge is part of the horizon.
 ***trajectory*** <br><br>} | | JSON object | The trajectory is to be communicated as NURBS and is defined in Section [6.6.6 Implementation of the order message](#666-implementation-of-the-order-message)<br><br>Trajectory segments start from the point, where the vehicle enters the edge, and terminate at the point, where the vehicle reports that the end node was traversed.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **agvPosition** { | | JSON object | Defines the position on a map in world coordinates. Each floor has its own map.
 positionInitialized | | boolean | "true": position is initialized.<br>"false": position is not initialized.
@@ -1074,14 +1074,14 @@ theta | | float64 | Range: [-Pi ... Pi]<br><br>Orientation of the AGV.
 mapId | | string | Unique identification of the map in which the position is referenced.<br><br>Each map has the same origin of coordinates.<br>When an AGV uses an elevator from a departure floor to a destination floor, it leaves the map of the departure floor and spawns on the corresponding elevator node on the map of the destination floor.
 *mapDescription*<br>} | | string | Additional information on the map.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **velocity** { | | JSON object |
 *vx* | m/s | float64 | The AGV's velocity in its X-direction.
 *vy* | m/s | float64 | The AGV's velocity in its Y-direction.
 *omega*<br>}| Rad/s | float64 | The AGV's turning speed around its Z-axis.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **load** { | | JSON object |
 *loadId* | | string | Unique identification of the load (e.g., barcode or RFID).<br><br>Empty field, if the AGV can identify the load but didn't identify the load yet.<br><br>Optional if the AGV cannot identify the load.
@@ -1091,7 +1091,7 @@ Object structure | Unit | Data type | Description
 ***loadDimensions*** | | JSON object | Dimensions of the load's bounding box in meters.
 *weight*<br>} | kg | float64 | Range: [0.0 ... float64.max]<br><br>Absolute weight of the load measured in kg.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **boundingBoxReference** { | | JSON object | Point of reference for the location of the bounding box. <br>The point of reference is always the center of the bounding box's bottom surface (at height = 0) and is described in coordinates of the AGV's coordinate system.
 x | | float64 | X-coordinate of the point of reference.
@@ -1099,14 +1099,14 @@ y | | float64 | Y-coordinate of the point of reference.
 z | | float 64 | Z-coordinate of the point of reference.
 *theta*<br> } | | float64 | Orientation of the loads bounding box. <br>Important for tuggers, trains, etc.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **loadDimensions** { | | JSON object | Dimensions of the load's bounding box in meters.
 length | m | float64 | Absolute length of the load's bounding box.
 width | m | float64 | Absolute width of the load's bounding box.
 *height* <br>}| m | float64 | Absolute height of the load's bounding box.<br><br>Optional:<br><br>Set value only if known.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **actionState** { | | JSON object |
 actionId | |string | Unique identifier of the action.
@@ -1115,7 +1115,7 @@ actionId | |string | Unique identifier of the action.
 actionStatus | | string | Enum {'WAITING', 'INITIALIZING', 'RUNNING', 'PAUSED', 'FINISHED', 'FAILED'}<br><br>See Section [6.11 actionStates](#611-actionstates).
 *resultDescription*<br>} | | string | Description of the result, e.g., the result of an RFID reading.<br><br>Errors will be transmitted in errors.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **batteryState** { | | JSON object | 
 batteryCharge | % | float64 | State of Charge: <br> if AGV only provides values for good or bad battery levels, these will be indicated as 20% (bad) and 80% (good). 
@@ -1124,7 +1124,7 @@ batteryCharge | % | float64 | State of Charge: <br> if AGV only provides values 
 charging | | boolean | “true”: charging in progress.<br>“false”: the AGV is currently not charging.
 *reach* <br>}| m | uint32 | Range: [0 ... uint32.max]<br><br>Estimated reach with current state of charge. 
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **error** { | | JSON object |
 errorType | | string | Type/name of error
@@ -1133,13 +1133,13 @@ errorType | | string | Type/name of error
 *errorHint* | | string | Hint on how to approach or solve the reported error.
 errorLevel <br> }| | string | Enum {'WARNING', 'FATAL'}<br><br>'WARNING': the AGV is ready to start (e.g., maintenance cycle expiration warning).<br>'FATAL': the AGV is not in running condition, user intervention required (e.g., laser scanner is contaminated).
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **errorReference** { | | JSON object |
 referenceKey | | string | Specifies the type of reference used (e.g., nodeId, edgeId, orderId, actionId, etc.).
 referenceValue <br>} | | string | The value that belongs to the reference key. For example, the ID of the node where the error occurred.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **info** { | | JSON object |
 infoType | | string | Type/name of information.
@@ -1147,13 +1147,13 @@ infoType | | string | Type/name of information.
 *infoDescription* | | string | Description of the information.
 infoLevel <br>}| | string | Enum {'DEBUG', 'INFO'}<br><br>'DEBUG': used for debugging.<br> 'INFO': used for visualization.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **infoReference** { | | JSON object |
 referenceKey | | string | References the type of reference (e.g., headerId, orderId, actionId, etc.).
 referenceValue <br>} | | string | References the value, which belongs to the reference key.
 
-Object structure | Unit | Data type | Description
+オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
 **safetyState** { | | JSON object |
 eStop | | string | Enum {'AUTOACK', 'MANUAL', 'REMOTE', 'NONE'}<br><br>Acknowledge-Type of eStop:<br>'AUTOACK': auto-acknowledgeable e-stop is activated, e.g., by bumper or protective field.<br>'MANUAL': e-stop hast to be acknowledged manually at the vehicle.<br>'REMOTE': facility e-stop has to be acknowledged remotely.<br>'NONE': no e-stop activated.
@@ -1290,7 +1290,7 @@ All messages on this topic shall be sent with a retained flag.
 ### 6.15.1 Factsheet JSON structure
 The factsheet consists of the JSON objects listed in the following table.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 | --- | --- | --- |
 | headerId | uint32 | Header ID of the message. <br>The headerId is defined per topic and incremented by 1 with each sent (but not necessarily received) message. |
 | timestamp | string | Timestamp (ISO8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ(e.g., "2017-04-15T11:40:03.12Z"). |
@@ -1309,7 +1309,7 @@ The factsheet consists of the JSON objects listed in the following table.
 
 This JSON object describes general properties of the AGV type.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | seriesName | string | Free text generalized series name as specified by manufacturer. |
 | *seriesDescription* | string | Free text human-readable description of the AGV type series. |
@@ -1323,7 +1323,7 @@ This JSON object describes general properties of the AGV type.
 
 This JSON object describes physical properties of the AGV.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | speedMin | float64 | [m/s] Minimal controlled continuous speed of the AGV. |
 | speedMax | float64 | [m/s] Maximum speed of the AGV. |
@@ -1341,7 +1341,7 @@ This JSON object describes physical properties of the AGV.
 This JSON object describes the protocol limitations of the AGV.
 If a parameter is not defined or set to zero then there is no explicit limit for this parameter.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | **maxStringLens** { | JSON object | Maximum lengths of strings. |
 | &emsp;*msgLen* | uint32 | Maximum MQTT message length. |
@@ -1381,7 +1381,7 @@ If a parameter is not defined or set to zero then there is no explicit limit for
 
 This JSON object defines actions and parameters which are supported by the AGV.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | **optionalParameters** [**optionalParameter**] | array of JSON object | Array of supported and/or required optional parameters.<br/>Optional parameters that are not listed here are assumed to be not supported by the AGV. |
 | { | | |
@@ -1409,7 +1409,7 @@ This JSON object defines actions and parameters which are supported by the AGV.
 
 This JSON object defines the geometry properties of the AGV, e.g., outlines and wheel positions.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | ***wheelDefinitions** [**wheelDefinition**]* | array of JSON object | Array of wheels, containing wheel arrangement and geometry. |
 | { | | |
@@ -1449,7 +1449,7 @@ This JSON object defines the geometry properties of the AGV, e.g., outlines and 
 
 This JSON object specifies load handling and supported load types of the AGV.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | *loadPositions* | array of string | Array of load positions / load handling devices.<br/>This array contains the valid values for the parameter "state.loads[].loadPosition" and for the action parameter "lhd" of the actions pick and drop.<br/>*If this array doesn't exist or is empty, the AGV has no load handling device.* |
 | ***loadSets [loadSet]*** | array of JSON object | Array of load sets that can be handled by the AGV |
@@ -1478,7 +1478,7 @@ This JSON object specifies load handling and supported load types of the AGV.
 
 This JSON object details the software and hardware versions running on the vehicle, as well as a brief summary of network information.
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
 | *versions[versionInfo]* | array of JSON object | Array of key-value pair objects containing software and hardware information.| | { | | |
 |&emsp; key | string | Key of the software/hardware version used. (e.g., softwareVersion) |
@@ -1493,35 +1493,36 @@ This JSON object details the software and hardware versions running on the vehic
 | &emsp;} | | |
 
 
-# 7 Best practice
+# 7 ベストプラクティス
 
-This section includes additional information, which helps in facilitating a common understanding concurrent with the logic of the protocol.
+このセクションには、プロトコルのロジックと併せて共通理解を促進するのに役立つ追加情報が含まれている。
 
-## 7.1 Error reference
 
-If an error occurs due to an erroneous order, the AGV should return a meaningful error reference in the field errorReferences (see Section [6.10.6 Implementation of the state message](#6106-implementation-of-the-state-message) of the state topic).
-This can include the following information:
+## 7.1 エラー参照
+
+誤った注文によりエラーが発生した場合、AGV はフィールド errorReferences（ステートトピックのセクション [6.10.6 ステートメッセージの実装](#6106-implementation-of-the-state-message) を参照）に意味のあるエラー参照を返す必要がある。
+これには以下の情報が含まれる。
 
 - `headerId`
-- Topic (`order` or `instantAction`)
-- `orderId` and `orderUpdateId` if error was caused by an order update
-- `actionId` if error was caused by an action
-- List of parameters if error was caused by erroneous action parameters
+- トピック (`order` または `instantAction`)
+- エラーが注文の更新によって引き起こされた場合は、`orderId` および `orderUpdateId`
+- エラーがアクションによって引き起こされた場合は、`actionId`
+- エラーが誤ったアクションパラメータによって引き起こされた場合は、パラメータのリスト
 
-If an action cannot be completed because of external factors (e.g., no load at expected position), the actionId should be referenced.
+外部要因（例えば、期待された位置で読み込みが行われないなど）によりアクションが完了できない場合、actionId を参照すること。
 
 
-## 7.2 Format of parameters
+## 7.2 パラメータのフォーマット
 
-Parameters for errors, information and actions are designed as an array of JSON objects with key-value pairs.
+エラー、情報、アクション用のパラメータは、キーと値のペアを持つJSONオブジェクトの配列として設計されています。
 
-| **Field** | **data type** | **description** |
+| **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
-**actionParameter** { | JSON object | actionParameter for the indicated action, e.g., deviceId, loadId, external triggers.
-key | string | The key of the parameter.
-value</br>} | One of:</br>array,</br>boolean,</br>number,</br>string,</br>object | The value of the parameter that belongs to the key.
+**actionParameter** { | JSON object | 指定されたアクション用のアクションパラメータ、例えば、deviceId、loadId、外部トリガー。
+key | string | パラメータのキー。
+value</br>} | 以下のいずれか:</br>array,</br>boolean,</br>number,</br>string,</br>object | キーに対応するパラメータの値。
 
-Examples for the `actionParameter` of an action "someAction" with key-value pairs for stationType and loadType:
+ステーションタイプと負荷タイプに対するキーと値のペアを持つアクション「someAction」の「actionParameter」の例：
 
 "actionParameters":[
 {"key":"stationType", "value": "floor"},
@@ -1529,7 +1530,7 @@ Examples for the `actionParameter` of an action "someAction" with key-value pair
 {"key": "loadType", "value": "pallet_eu"}
 ]
 
-The reason for using the proposed scheme of "key": "actualKey", "value": "actualValue" is to keep the implementation generic. The "actualValue" can be of any possible JSON data type, such as float, bool, and even an object.
+"key", "actualKey", "value", "actualValue"という提案されたスキームを使用する理由は、実装を汎用的に保つためです。 "actualValue"は、float、bool、さらにはオブジェクトなど、あらゆるJSONデータタイプが可能です。
 
 
 # 8 用語集
