@@ -62,10 +62,10 @@ Version 2.1.0
 [6.3 MQTT トピックレベル](#63-mqtt-トピックレベル)<br>
 [6.4 プロトコルヘッダー](#64-プロトコルヘッダー)<br>
 [6.5 通信トピック](#65-通信トピック)<br>
-[6.6 トピック："order"（マスターコントロールからAGVへの）](#66-トピック：order（マスターコントロールからagvへの）)<br>
+[6.6 トピック："order"（マスターコントロールからAGVへの）](#66-トピックorderマスターコントロールからagvへの)<br>
 [6.6.1 概念とロジック](#661-概念とロジック)<br>
 [6.6.2 注文と注文の更新](#662-注文と注文の更新)<br>
-[6.6.3 注文キャンセル（マスターコントロールによる）](#663-注文キャンセル（マスターコントロールによる）)<br>
+[6.6.3 注文キャンセル（マスターコントロールによる）](#663-注文キャンセルマスターコントロールによる)<br>
 [6.6.4 注文の拒否](#664-注文の拒否)<br>
 [6.6.5 Corridors](#665-corridors)<br>
 [6.6.6 注文メッセージの実装](#666-注文メッセージの実装)<br>
@@ -75,23 +75,23 @@ Version 2.1.0
 [6.7.3 地図のダウンロード](#673-地図のダウンロード)<br>
 [6.7.4 ダウンロードされた地図の有効化](#674-ダウンロードされた地図の有効化)<br>
 [6.7.5 車両上地図の削除](#675-車両上地図の削除)<br>
-[6.8 Actions](#68-actions)<br>
-[6.8.1 Definition, parameters, effects and scope of predefined actions](#681-definition-parameters-effects-and-scope-of-predefined-actions)<br>
-[6.8.2 States of predefined actions](#682-states-of-predefined-actions)<br>
-[6.9 Topic: "instantActions" (from master control to AGV)](#69-topic-instantactions-from-master-control-to-agv)<br>
-[6.10 Topic: "state" (from AGV to master control)](#610-topic-state-from-agv-to-master-control)<br>
-[6.10.1 Concept and logic](#6101-concept-and-logic)<br>
-[6.10.2 Traversal of nodes and entering/leaving edges, triggering of actions](#6102-traversal-of-nodes-and-enteringleaving-edges-triggering-of-actions)<br>
-[6.10.3 Base request](#6103-base-request)<br>
-[6.10.4 Information](#6104-information)<br>
-[6.10.5 Errors](#6105-errors)<br>
-[6.10.6 Implementation of the state message](#6106-implementation-of-the-state-message)<br>
-[6.11 actionStates](#611-actionstates)<br>
-[6.12 Action blocking types and sequence](#612-action-blocking-types-and-sequence)<br>
-[6.13 Topic "visualization"](#613-topic-visualization)<br>
-[6.14 Topic "connection"](#614-topic-connection)<br>
-[6.15 Topic "factsheet"](#615-topic-factsheet)<br>
-[6.15.1 Factsheet JSON structure](#6151-factsheet-json-structure)<br>
+[6.8 アクション](#68-アクション)<br>
+[6.8.1 定義済みアクションの定義、パラメータ、効果および範囲](#681-定義済みアクションの定義、パラメータ、効果および範囲)<br>
+[6.8.2 定義済みアクションの状態](#682-定義済みアクションの状態)<br>
+[6.9 トピック："instantActions"（マスターコントロールからAGVへの）](#69-トピックinstantActionsマスターコントロールからagvへの)<br>
+[6.10 トピック："state"（AGVからマスターコントロールへの）](#610-トピックstateagvからマスターコントロールへの)<br>
+[6.10.1 概念とロジック](#6101-概念とロジック)<br>
+[6.10.2 ノードの通過とエッジへの進入/退出、アクションのトリガー](#6102-ノードの通過とエッジへの進入/退出、アクションのトリガー)<br>
+[6.10.3 代替機要求](#6103-代替機要求)<br>
+[6.10.4 情報](#6104-情報)<br>
+[6.10.5 エラー](#6105-エラー)<br>
+[6.10.6 stateメッセージの実装](#6106-stateメッセージの実装)<br>
+[6.11 アクション状態](#611-アクション状態)<br>
+[6.12 アクションのブロックの種類とシーケンス](#612-アクションのブロックの種類とシーケンス)<br>
+[6.13 "visualization"トピック](#613-visualizationトピック)<br>
+[6.14 "connection"トピック](#614-connectionトピック)<br>
+[6.15 "factsheet"トピック](#615-factsheetトピック)<br>
+[6.15.1 ファクトシートJSON構造](#6151-ファクトシートjson構造)<br>
 [7 ベストプラクティス](#7-ベストプラクティス)<br>
 [7.1 エラー参照](#71-エラー参照)<br>
 [7.2 パラメータのフォーマット](#72-パラメータのフォーマット)<br>
@@ -829,49 +829,52 @@ AGVは、マップファイルのダウンロードを開始すると同時に�
 マップの削除に成功した後、車両の状態における車両のマップの配列からそのマップのエントリを削除することが重要である。
 
 
-## 6.8 Actions
+## 6.8 アクション
 
-If the AGV supports actions other than driving, these actions are executed via the action field that is attached to either a node or an edge, or sent via the separate topic `instantActions` (see Section [6.10 Topic "instantActions"](#610-topic-instantactions-from-master-control-to-agv)).
+AGVが走行以外の動作をサポートしている場合、これらの動作はノードまたはエッジに接続されたアクションフィールドを介して実行されるか、または個別の"instantActions"トピック（セクション[6.10 トピック"instantActions"](#610-topic-instantactions-from-master-control-to-agv)を参照）を介して送信される。
 
-Actions that are to be executed on an edge shall only run while the AGV is on the edge (see Section [6.11.2 Traversal of nodes and entering/leaving edges](#6112-traversal-of-nodes-and-enteringleaving-edges-triggering-of-actions)).
+エッジ上で実行されるアクションは、AGV がエッジ上にある間のみ実行される（セクション [6.11.2 ノードの横断とエッジへの進入/退出](#6112-traversal-of-nodes-and-enteringleaving-edges-triggering-of-actions)を参照）。
 
-Actions that are triggered on nodes can run as long as they need to run and should be self-terminating (e.g., an audio signal that lasts for five seconds or a pick action, that is finished after picking up a load) or formulated pairwise (e.g., "activateWarningLights" and "deactivateWarningLights"), although there may be exceptions.
+ノードでトリガーされるアクションは、実行する必要がある限り実行することができ、自己終了型であるべきである（例えば、5秒間続くオーディオ信号や、荷物を持ち上げた後に終了するピックアクションなど）。ただし、例外がある場合もある。
 
-The following section presents predefined actions that shall be used by the AGV, if the AGV's capabilities map to the action description.
-If there is a sensible way to use the defined parameters, they shall be used.
-Additional parameters can be defined, if they are needed to execute an action successfully.
+次のセクションでは、AGVの機能がアクションの説明に対応する場合にAGVが使用する、定義済みのアクションを紹介する。
+定義済みのパラメータを適切に使用できる場合は、そのパラメータを使用する。
+アクションを正常に実行するために必要な場合は、追加のパラメータを定義できる。
 
-If there is no way to map some action to one of the actions of the following section, the AGV manufacturer can define additional actions that shall be used by master control.
+あるアクションを次のセクションのアクションの1つにマッピングする方法がない場合、AGVメーカーは、マスターコントロールで使用される追加のアクションを定義することができる。
 
 
-### 6.8.1 Definition, parameters, effects and scope of predefined actions
+### 6.8.1 定義済みアクションの定義、パラメータ、効果および範囲
 
-general | | scope
+general | | 範囲
 :---:|--- | :---:
-action, counter action, description, idempotent, parameters | linked state | instant, node, edge
+アクション, 対となるアクション, 説明, 冪等性, パラメータ | 関連する状態 | インスタント, ノード, エッジ
 
-action | counter action | description | idempotent | parameters | linked state | instant | node | edge
+※冪等性とは何回やっても結果が同じになる性質を表す
+※インスタントとはインスタントアクションとして即時実行可能であるかを表す
+
+アクション | 対となるアクション | 説明 | 冪等性 | パラメータ | 関連する状態 | インスタント | ノード | エッジ
 ---|---|---|---|---|---|---|---|---
-startPause | stopPause | Activates the pause mode. <br>A linked state is required, because many AGVs can be paused by using a hardware switch. <br>No more AGV driving movements - reaching next node is not necessary.<br>Actions can continue. <br>Order is resumable. | yes | - | paused | yes | no | no
-stopPause | startPause | Deactivates the pause mode. <br>Movement and all other actions will be resumed (if any).<br>A linked state is required because many AGVs can be paused by using a hardware switch. <br>stopPause can also restart vehicles that were stopped with a hardware button that triggered startPause (if configured). | yes | - | paused | yes | no | no
-startCharging | stopCharging | Activates the charging process. <br>Charging can be done on a charging spot (vehicle standing) or on a charging lane (while driving). <br>Protection against overcharging is responsibility of the vehicle. | yes | - | .batteryState.charging | yes | yes | no
-stopCharging | startCharging | Deactivates the charging process to send a new order. <br>The charging process can also be interrupted by the vehicle / charging station, e.g., if the battery is full. <br>Battery state is only allowed to be "false", when the AGV is ready to receive orders. | yes | - |.batteryState.charging | yes | yes | no
-initPosition | - | Resets (overrides) the pose of the AGV with the given parameters. | yes | x (float64)<br>y (float64)<br>theta (float64)<br>mapId (string)<br>lastNodeId (string) | .agvPosition.x<br>.agvPosition.y<br>.agvPosition.theta<br>.agvPosition.mapId<br>.lastNodeId<br>.maps | yes | yes<br>(Elevator) | no
-enableMap | - | Enable a previously downloaded map explicitly to be used in orders without initializing a new position. | yes | mapId (string)<br>mapVersion (string) | .maps | yes | yes | no
-downloadMap | - | Trigger the download of a new map. Active during the download. Errors reported in vehicle state. Finished after verifying the successful download, preparing the map for use and setting the map in the state. | yes | mapId (string)<br>mapVersion (string)<br>mapDownloadLink (string)<br>mapHash (string, optional) | .maps | yes | no | no
-deleteMap | - | Trigger the removal of a map from the vehicle memory. | yes | mapId (string)<br>mapVersion (string) | .maps | yes | no | no
-stateRequest | - | Requests the AGV to send a new state report. | yes | - | - | yes | no | no
-logReport | - | Requests the AGV to generate and store a log report. | yes | reason<br>(string) | - | yes | no | no
-pick | drop<br><br>(if automated) | Request the AGV to pick a load. <br>AGVs with multiple load handling devices can process multiple pick operations in parallel. <br>In this case, the parameter lhd needs to be present (e.g., LHD1). <br>The parameter stationType informs how the pick operation is handled in detail (e.g., floor location, rack location, passive conveyor, active conveyor, etc.). <br>The load type informs about the load unit and can be used to switch field for example (e.g., EPAL, INDU, etc). <br>For preparing the load handling device (e.g., pre-lift operations based on the height parameter), the action could be announced in the horizon in advance. <br>But, pre-Lift operations, etc., are not reported as 'RUNNING' in the AGV state, because the associated node is not released yet.<br>If on an edge, the vehicle can use its sensing device to detect the position for picking the node. | no |lhd (string, optional)<br>stationType (string)<br>stationName(string, optional)<br>loadType (string) <br>loadId(string, optional)<br>height (float64) (optional)<br>defines bottom of the load related to the floor<br>depth (float64) (optional) for forklifts<br>side(string) (optional) e.g., conveyor | .load | no | yes | yes
-drop | pick<br><br>(if automated) | Request the AGV to drop a load. <br>See action pick for more details. | no | lhd (string, optional)<br>stationType (string, optional)<br>stationName (string, optional)<br>loadType (string, optional)<br>loadId(string, optional)<br>height (float64, optional)<br>depth (float64, optional) <br>… | .load | no | yes | yes
-detectObject | - | AGV detects object (e.g., load, charging spot, free parking position). | yes | objectType(string, optional) | - | no | yes | yes
-finePositioning | - | On a node, AGV will position exactly on a target.<br>The AGV is allowed to deviate from its node position.<br>On an edge, the AGV will e.g., align on stationary equipment while traversing an edge.<br>InstantAction: AGV starts positioning exactly on a target. | yes | stationType(string, optional)<br>stationName(string, optional) | - | no | yes | yes
-waitForTrigger | - | AGV has to wait for a trigger on the AGV (e.g., button press, manual loading). <br>Master control is responsible to handle the timeout and has to cancel the order if necessary. | yes | triggerType(string) | - | no | yes | no
-cancelOrder | - | AGV stops as soon as possible. <br>This could be immediately or on the next node. <br>Then the order is deleted. All actions are canceled. | yes | - | - | yes | no | no
-factsheetRequest | - | Requests the AGV to send a factsheet | yes | - | - | yes | no | no
+startPause | stopPause | 一時停止モードを起動する。<br>多くのAGVはハードウェアスイッチを使用して一時停止できるため、リンク状態が必要である。<br>AGVの移動は不要である。つまり、次のノードに到達する必要はない。<br>処理を継続できる。<br>注文は再開できる。 | yes | - | paused | yes | no | no
+stopPause | startPause | 一時停止モードを解除する。<br>移動やその他のすべての動作が再開される（実行されている場合）。<br>多くのAGVはハードウェアスイッチを使用して一時停止できるため、リンク状態が必要である。<br>stopPauseは、startPause（構成されている場合）をトリガーするハードウェアボタンで停止した車両を再起動することもできる。 | yes | - | paused | yes | no | no
+startCharging | stopCharging | 充電プロセスを開始する。<br>充電は、充電スポット（車両を停車させた状態）または充電レーン（走行中）で行うことができる。<br>過充電に対する保護は車両の責任である。 | yes | - | .batteryState.charging | yes | yes | no
+stopCharging | startCharging | 新しい注文を送信するために充電プロセスを無効にする。<br>充電プロセスは、車両/充電ステーションによって中断される場合もある。例えば、バッテリーがフルの状態などである。<br>バッテリーの状態が"false"とされるのは、AGVが注文を受け取る準備ができている場合のみである。 | yes | - |.batteryState.charging | yes | yes | no
+initPosition | - | 指定されたパラメータでAGVの姿勢をリセット（上書き）する。 | yes | x (float64)<br>y (float64)<br>theta (float64)<br>mapId (string)<br>lastNodeId (string) | .agvPosition.x<br>.agvPosition.y<br>.agvPosition.theta<br>.agvPosition.mapId<br>.lastNodeId<br>.maps | yes | yes<br>(Elevator) | no
+enableMap | - | 新しい位置を初期化せずに、以前にダウンロードした地図を明示的に注文で使用できるようにする。 | yes | mapId (string)<br>mapVersion (string) | .maps | yes | yes | no
+downloadMap | - | 新しい地図のダウンロードを開始する。ダウンロード中はアクティブである。車両の状態にエラーが報告される。ダウンロードが正常に完了し、地図を使用する準備ができ、地図が車両の状態に設定された後、処理が終了する。 | yes | mapId (string)<br>mapVersion (string)<br>mapDownloadLink (string)<br>mapHash (string, optional) | .maps | yes | no | no
+deleteMap | - | 車両のメモリからマップを削除する。 | yes | mapId (string)<br>mapVersion (string) | .maps | yes | no | no
+stateRequest | - | AGVに新しい状態レポートの送信を要求する。 | yes | - | - | yes | no | no
+logReport | - | AGVにログレポートの作成と保存を要求する。 | yes | reason<br>(string) | - | yes | no | no
+pick | drop<br><br>(if automated) | AGVに荷物のピックアップを指示する。<br>複数の荷役装置を搭載したAGVは、複数のピック操作を並行して処理できる。<br>この場合、パラメータlhdが存在する必要がある（例：LHD1）。<br>stationTypeパラメータは、ピック操作がどのように処理されるかを詳細に通知する（例：フロアの場所、ラックの場所、パッシブコンベア、アクティブコンベアなど）。<br>loadTypeパラメータは荷役ユニットに関する情報を提供し、例えばフィールドの切り替えに使用することができる（例：EPAL、INDUなど）。<br>荷役処理装置を準備（例：heightパラメータに基づく事前リフト操作など）する場合、アクションは事前にホライズンに通知することができる。<br>しかし、事前リフト操作などは、関連するノードがまだ解放されていないため、AGVの状態では'RUNNING'として報告されない。<br>車両がエッジにある場合、車両はセンシングデバイスを使用して、ノードを選択するための位置を検出できる。 | no |lhd (string, optional)<br>stationType (string)<br>stationName(string, optional)<br>loadType (string) <br>loadId(string, optional)<br>height (float64) (optional)<br>defines bottom of the load related to the floor<br>depth (float64) (optional) for forklifts<br>side(string) (optional) e.g., conveyor | .load | no | yes | yes
+drop | pick<br><br>(if automated) | AGVに荷物を降ろすよう指示する。<br>詳細は、ピッキング動作を参照のこと。 | no | lhd (string, optional)<br>stationType (string, optional)<br>stationName (string, optional)<br>loadType (string, optional)<br>loadId(string, optional)<br>height (float64, optional)<br>depth (float64, optional) <br>… | .load | no | yes | yes
+detectObject | - | AGVに物体の検出を指示する（例：荷物、充電スポット、フリーパーキング位置）。 | yes | objectType(string, optional) | - | no | yes | yes
+finePositioning | - | ノード上で、AGVをターゲット上に正確に位置決めさせる。<br>AGVはノード位置からの逸脱が許可されている。<br>エッジ上で実行する例として、AGVがエッジを通行しながら固定設備に整列することが挙げられる。<br>InstantAction: AGVはターゲット上に正確に位置決めを開始する。 | yes | stationType(string, optional)<br>stationName(string, optional) | - | no | yes | yes
+waitForTrigger | - | AGVはAGV上のトリガー（例：ボタン押下、手動による読み込み）を待機する。<br>マスターコントロールはタイムアウトを処理する責任があり、必要に応じて注文をキャンセルしなければならない。 | yes | triggerType(string) | - | no | yes | no
+cancelOrder | - | AGVはできるだけ早く停止する。<br>AGVの能力に応じて、これは即座に、または次のノードで実行される可能性がある。<br>次に、注文が削除される。<br>すべてのアクションがキャンセルされる。 | yes | - | - | yes | no | no
+factsheetRequest | - | AGVにファクトシートの送信を要求する | yes | - | - | yes | no | no
 
 
-### 6.8.2 States of predefined actions
+### 6.8.2 定義済みアクションの状態
 
 action | action states
 ---|:---:
@@ -879,141 +882,138 @@ action | action states
 
 action | 'INITIALIZING' | 'RUNNING' | 'PAUSED' | 'FINISHED' | 'FAILED'
 ---|---|---|---|---|---
-startPause | - | Activation of the mode is in preparation.<br>If the AGV supports an instant transition, this state can be omitted. | - | Vehicle stands still. <br>All actions will be paused. <br>The pause mode is activated. <br>The AGV reports .paused: "true". | The pause mode cannot be activated for some reason (e.g., overridden by hardware switch).
-stopPause | - | Deactivation of the mode is in preparation. <br>If the AGV supports an instant transition, this state can be omitted. | - | The pause mode is deactivated. <br>All paused actions will be resumed. <br>The AGV reports .paused: "false". | The pause mode cannot be deactivated for some reason (e.g., overwritten by hardware switch).
-startCharging | - | Activation of the charging process is in progress (communication with charger is running). <br>If the AGV supports an instant transition, this state can be omitted. | - | The charging process is started. <br>The AGV reports .batteryState.charging: "true". | The charging process could not be started for some reason (e.g., not aligned to charger). Charging problems should correspond with an error.
-stopCharging | - | Deactivation of the charging process is in progress (communication with charger is running). <br>If the AGV supports an instant transition, this state can be omitted. | - | The charging process is stopped. <br>The AGV reports .batteryState.charging: "false" | The charging process could not be stopped for some reason (e.g., not aligned to charger).<br> Charging problems should correspond with an error.
-initPosition | - | Initializing of the new pose in progress (confidence checks, etc.). <br>If the AGV supports an instant transition, this state can be omitted. | - | The pose is reset. <br>The AGV reports <br>.agvPosition.x = x, <br>.agvPosition.y = y, <br>.agvPosition.theta = theta <br>.agvPosition.mapId = mapId <br>.agvPosition.lastNodeId = lastNodeId | The pose is not valid or cannot be reset. <br>General localization problems should correspond with an error.
-| downloadMap | Initialize the connection to the map server. | AGV is downloading the map, until download is finished. | - | AGV updates its state by setting the mapId/mapVersion and the corresponding mapStatus to 'DISABLED'. | The download failed, updated in vehicle state (e.g., connection lost, Map server unreachable, mapId/mapVersion not existing on map server). |
-| enableMap | - | AGV enables the map with the requested mapId and mapVersion while disabling other versions with the same mapId. | - | The AGV updates the corresponding mapStatus of the requested map to 'ENABLED' and the other versions with same mapId to 'DISABLED'. | The requested mapId/mapVersion combination does not exist.|
-| deleteMap | - | AGV deletes map with requested mapId and mapVersion from its internal memory. | - | AGV removes mapId/mapVersion from its state. | Can not delete map, if map is currently in use. The requested mapId/mapVersion combination was already deleted before. |
-stateRequest | - | - | - | The state has been communicated | -
-logReport | - | The report is in generating. <br>If the AGV supports an instant generation, this state can be omitted. | - | The report is stored. <br>The name of the log will be reported in status. | The report can not be stored (e.g., no space).
-pick | Initializing of the pick process, e.g., outstanding lift operations. | The pick process is running (AGV is moving into station, load handling device is busy, communication with station is running, etc.). | The pick process is being paused, e.g., if a safety field is violated. <br>After removing the violation, the pick process continues. | Pick is done. <br>Load has entered the AGV and AGV reports new load state. | Pick failed, e.g., station is unexpected empty. <br> Failed pick operations should correspond with an error.
-drop | Initializing of the drop process, e.g., outstanding lift operations. | The drop process is running (AGV is moving into station, load handling device is busy, communication with station is running, etc.). | The drop process is being paused, e.g., if a safety field is violated. <br>After removing the violation the drop process continues. | Drop is done. <br>Load has left the AGV and AGV reports new load state. | Drop failed, e.g., station is unexpected occupied. <br>Failed drop operations should correspond with an error.
-detectObject | - | Object detection is running. | - | Object has been detected. | AGV could not detect the object.
-finePositioning | - | AGV positions itself exactly on a target. | The fine positioning process is being paused, e.g., if a safety field is violated. <br>After removing the violation, the fine positioning continues. | Goal position in reference to the station is reached. | Goal position in reference to the station could not be reached.
-waitForTrigger | - | AGV is waiting for the trigger | - | Trigger has been triggered. | waitForTrigger fails, if order has been canceled.
-cancelOrder | - | AGV is stopping or driving, until it reaches the next node. | - | AGV stands still and has canceled the order. | -
-factsheetRequest | - | - | - | The factsheet has been communicated | -
+startPause | - | 一時停止モードの起動準備中である。<br>AGVが即時移行をサポートしている場合は、この状態は省略できる。 | - | 車両は停止している。<br>すべての動作が一時停止される。<br>一時停止モードが有効になっている。<br>AGVはpausedを"true"で報告する。 | 何らかの理由（ハードウェアスイッチで無効化されているなど）で一時停止モードが有効にならない。
+stopPause | - | 一時停止モードの解除準備中である。 <br>AGVが即時移行をサポートしている場合は、この状態は省略できる。 | - | 一時停止モードは解除される。 <br>一時停止中のすべてのアクションが再開される。 <br>AGVはpausedを"false"で報告する。 | 何らかの理由（ハードウェアスイッチで上書きされているなど）で一時停止モードを解除できない。
+startCharging | - | 充電プロセスの起動中（充電器との通信中）である。 <br>AGVが即時遷移をサポートしている場合は、この状態は省略可能である。 | - | 充電プロセスが開始された。 <br>AGVは.batteryState.chargingを"true"で報告する。 | 何らかの理由（例：充電器に整列していない）で充電プロセスを開始できなかった。 充電の問題はエラーに対応付けられるべきである。
+stopCharging | - | 充電プロセスの停止処理中（充電器との通信中）である。<br>AGVが即時の移行をサポートしている場合は、この状態は省略できる。 | - | 充電プロセスが停止された。<br>AGVが.batteryState.chargingを"false"で報告する。 | 何らかの理由（例：充電器に整列していない）で充電プロセスを停止できなかった。<br>充電の問題はエラーと対応付けられるべきである。
+initPosition | - | 新しいポーズの初期化が進行中である（信頼性の確認など）。<br>AGVが即時の移行をサポートしている場合は、この状態は省略できる。 | - | ポーズがリセットされた。 <br>AGVは以下を報告する。 <br>.agvPosition.x = x, <br>.agvPosition.y = y, <br>.agvPosition.theta = theta <br>.agvPosition.mapId = mapId <br>.agvPosition.lastNodeId = lastNodeId | ポーズが有効でないか、リセットできない場合。<br>一般的な位置特定の問題はエラーと対応付けられるべきである。
+| downloadMap | マップサーバーへの接続を初期化する。 | AGV がマップをダウンロード中である。ダウンロードが完了するまで待機する。 | - | AGV は、mapId/mapVersion および対応する mapStatus を'DISABLED'に設定することで、状態を更新する。 | ダウンロードに失敗した場合、車両の状態が更新される（例：接続が失われた、マップサーバーに到達できない、mapId/mapVersion がマップサーバーに存在しない）。 |
+| enableMap | - | AGVは、要求されたmapIdとmapVersionのマップを有効にし、同じmapIdを持つ他のバージョンを無効にする。 | - | AGVは、要求されたマップの対応するmapStatusを'ENABLED'に更新し、同じmapIdを持つ他のバージョンを'DISABLED'に更新する。 | 要求されたmapId/mapVersionの組み合わせが存在しない場合。|
+| deleteMap | - | AGV は要求された mapId と mapVersion のマップを内部メモリから削除している。 | - | AGV は mapId/mapVersion を状態から削除した。 | 対象のマップが現在使用中で削除できない場合。あるいは、要求された mapId/mapVersion の組み合わせはすでに削除済みである場合。 |
+stateRequest | - | - | - | 状態がやり取りされた。 | -
+logReport | - | レポートが生成中である。<br>AGVが即時生成をサポートしている場合は、このステートを省略できる。 | - | レポートが保存された。<br>ログの名前はステータスで報告される。 | レポートを保存できなかった（例：容量不足）。
+pick | ピッキング動作の初期化中である。例えば、事前リフト動作など。 | ピッキング動作が実行中（AGVがステーションに移動中、荷役処理装置が稼働中、ステーションとの通信中など）である。 | ピッキング動作が一時停止中である。例えば、安全領域が侵害された場合など。<br>障害が取り除かれた後、ピッキング処理が再開される。 | ピッキング動作が完了した。<br>荷物がAGVに入り、AGVが新しい荷物の状態を報告する。 | ピッキングに失敗した。例えば、ステーションが予期せず空の状態である。 <br>ピッキング操作に失敗した場合は、エラーと対応させるべきである。
+drop | ドロップ動作の初期化中である。例えば、事前リフト操作など。 | ドロップ動作が実行中（AGVがステーションに移動中、荷役装置が稼働中、ステーションとの通信中など）である。 | ドロップ動作が一時停止中である。例えば、安全領域が侵害された場合などである。<br>障害が取り除かれた後、ドロップ動作が再開される。 | ドロップが完了した。<br>荷物がAGVから降ろされ、AGVが新しい荷物の状態を報告する。 | ドロップに失敗した。例えば、ステーションが予期せず占有されている場合などである。<br>ドロップ操作に失敗した場合は、エラーと対応させる必要がある。
+detectObject | - | 物体検出を実行している。 | - | 物体が検出された。 | AGVが物体を検出できなかった。
+finePositioning | - | AGVが目標位置に正確に位置決めする。 | 安全領域が侵害された場合など、精密位置決めプロセスが一時停止される。<br>障害が取り除かれた後、精密位置決めが再開される。 | ステーションを基準とした目標位置に到達した。 | ステーションを基準とした目標位置に到達できなかった。
+waitForTrigger | - | AGVはトリガーを待機中である。 | - | トリガーが起動された。 | 注文がキャンセルされた場合、waitForTriggerは失敗する。
+cancelOrder | - | AGVは次のノードに到達するまで走行して停止するか即時停止する。 | - |  AGVは停止し、注文をキャンセルした。 | -
+factsheetRequest | - | - | - |  ファクトシートがやり取りされた。 | -
 
 
-## 6.9 Topic: "instantActions" (from master control to AGV)
+## 6.9 トピック："instantActions"（マスターコントロールからAGVへの）
 
-In certain cases, it is necessary to send actions to the AGV that need to be performed immediately.
-This is made possible by publishing an `instantAction` message to the topic `instantActions`.
-These shall not conflict with the content of the AGV's current order (e.g., `instantAction` to lower fork, while order says to raise fork).
+特定のケースでは、AGVに即座に実行する必要のあるアクションを送信する必要がある。
+これは、トピック`instantActions`に`instantAction`メッセージを発行することで実現できる。
+これらのアクションは、AGVの現在の注文内容と矛盾してはならない（例えば、フォークを下げるための`instantAction`と、注文でフォークを上げるよう指示されている場合など）。
 
-Some examples for which instant actions could be relevant are:
-- pause the AGV without changing anything in the current order;
-- resume order after pause;
-- activate signal (optical, audio, etc.).
+即時アクションが関連する可能性がある例としては、以下のようなものがある。
+- 現在の注文を変更せずに AGV を一時停止する。
+- 一時停止後に注文を再開する。
+- 信号（光、音声など）を起動する。
 
-For additional information, see Section [7 Best practice](#7-best-practice).
+追加情報については、セクション [7 ベストプラクティス](#7-ベストプラクティス)を参照のこと。
 
-Object structure | Data type | Description
+オブジェクト構造 | データ型 | 説明
 ---|---|---
-headerId | uint32 | Header ID of the message.<br> The header ID is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
-timestamp | string | Timestamp (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z")
-version | string | Version of the protocol [Major].[Minor].[Patch] (e.g., 1.3.2).
-manufacturer | string | Manufacturer of the AGV.
-serialNumber | string | Serial number of the AGV.
-actions [action] | array | Array of actions that need to be performed immediately and are not part of the regular order.
+headerId | uint32 | メッセージのヘッダーID<br>ヘッダーIDはトピックごとに定義され、送信されるメッセージごとに1ずつインクリメントされる（受信では必要ない）。
+timestamp | string | タイムスタンプ (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z")
+version | string | プロトコルのバージョン [メジャー].[マイナー].[パッチ] (例：1.3.2)
+manufacturer | string | AGVのメーカー名
+serialNumber | string | AGVのシリアル番号
+actions [action] | array | 即時に行う必要があるが、通常の順序には含まれないアクションの配列
 
-When an AGV receives an `instantAction`, an appropriate `actionStatus` is added to the `actionStates` array of the AGV's state.
-The `actionStatus` is updated according to the progress of the action.
-See also Figure 16 for the different transitions of an `actionStatus`.
+AGVが `instantAction` を受信すると、適切な `actionStatus` が AGV の状態の `actionStates` 配列に追加される。
+actionStatus` はアクションの進行状況に応じて更新される。
+`actionStatus` の異なる遷移については、図16も参照のこと。
 
+## 6.10 トピック："state"（AGVからマスターコントロールへの）
 
-## 6.10 Topic: "state" (from AGV to master control)
+AGVの状態は1つのトピックのみで送信される。
+個別のメッセージ（例えば、注文、バッテリーの状態、エラーなど）を1つのトピックで送信することで、メッセージ処理の負荷がブローカーとマスターコントロールの両方で軽減されると同時に、AGVの状態に関する情報の同期も維持される。
 
-The AGV state will be transmitted on only one topic.
-Compared to separate messages (e.g., for orders, battery state and errors) using one topic will reduce the workload of the broker and the master control for handling messages, while also keeping the information about the AGV state synchronized.
+AGVの状態メッセージは、関連するイベントの発生時に、または遅くとも30秒ごとにMQTTブローカー経由でマスターコントロールに公開される。
+ステートメッセージの送信をトリガーするイベントは以下の通りである。
+- 注文の受信
+- 注文の更新の受信
+- 積載状態の変更
+- エラーまたは警告
+- ノード上を走行
+- 動作モードの切り替え
+- `driving` フィールドの変更
+- `nodeStates`、`edgeStates`、または `actionStates` の変更
+- `maps` フィールドの変更
 
-The AGV state message will be published with occurrence of relevant events or at the latest every 30s via MQTT broker to master control.
-
-Events that trigger the transmission of the state message are:
-- Receiving an order
-- Receiving an order update
-- Changes in the load status
-- Errors or warnings
-- Driving over a node
-- Switching the operating mode
-- Change in the `driving` field
-- Change in the `nodeStates`, `edgeStates` or `actionStates`
-- Change in the `maps` field
-
-There should be an effort to curb the amount of communication.
-If two events correlate with each other (e.g., the receiving of a new order usually forces an update of the `nodeStates` and `edgeStates`; as does the driving over a node), it is sensible to trigger one state update instead of multiple.
+通信量を抑える取り組みが必要である。
+2つのイベントが相互に関連している場合（例えば、新しい注文を受けると通常は `nodeStates` と `edgeStates` の更新が強制される。ノード上を走行した場合も同様である）、複数の状態更新ではなく、1つの状態更新をトリガーすることが賢明である。
 
 
-### 6.10.1 Concept and logic
+### 6.10.1 概念とロジック
 
-The order progress is tracked by the `nodeStates` and `edgeStates`.
-Additionally, if the AGV is able to derive its current position, it can publish its position via the `position` field.
+注文の進捗状況は `nodeStates` と `edgeStates` によって追跡される。
+さらに、AGV が現在位置を特定できる場合は、`position` フィールドを通じてその位置を公開することができる。
 
-If the AGV plans the path by itself, it shall communicate its calculated trajectory (including base and horizon) in the form of NURBS via the `trajectory` object in the state message, unless master control cannot use this field, and it was agreed during integration, that this field shall not be sent.
-After nodes are released by master control, the AGV is not allowed to change its trajectory.
+AGVが自ら経路を計画する場合は、マスターコントロールがこのフィールドを使用できない場合、または統合時にこのフィールドを送信しないことで合意している場合を除き、状態メッセージの `trajectory` オブジェクトを通じて、NURBS形式で計算した軌道（ベースとホライズンを含む）を通知しなければならない。
+マスターコントロールによってノードが解放された後は、AGVはその軌道を変更することはできない。
 
-The `nodeStates` and `edgeStates` includes all nodes/edges, that the AGV still shall traverse.
+`nodeStates` および `edgeStates` には、AGV が通過する予定のすべてのノード/エッジが含まれる。
 
 ![Figure 14 Order information provided by the state topic. Only the ID of the last node and the remaining nodes and edges are transmitted](./assets/order_information_state_topic.png)
->Figure 14 Order information provided by the state topic. Only the ID of the last node and the remaining nodes and edges are transmitted
+>図14 ステートトピックが提供する注文情報。最後のノードのIDと残りのノードおよびエッジのみが送信される
 
 
+### 6.10.2 ノードの通過とエッジへの進入/退出、アクションのトリガー
 
-### 6.10.2 Traversal of nodes and entering/leaving edges, triggering of actions
+AGVは、ノードを通過したと見なすべきタイミングを独自に決定する。
+一般的に、AGVの制御点はノードの `allowedDeviationXY` の範囲内にあり、その方向は `allowedDeviationTheta` の範囲内にあるべきである。
+後続のエッジのエッジ属性 `corridor` が設定されている場合、これらの境界も満たさなければならない。
 
-The AGV decides on its own, when a node should count as traversed.
-Generally, the AGV's control point should be within the node's `allowedDeviationXY` and its orientation within `allowedDeviationTheta`.
-If the edge attribute `corridor` of the subsequent edge is set, these boundaries should be met additionally.
+AGVは、そのノードの `nodeState` を `nodeStates` 配列から削除し、`lastNodeId`、`lastNodeSequenceId` を通過したノードの値に設定することで、ノードの通過を報告する。
 
-The AGV reports the traversal of a node by removing its `nodeState` from the `nodeStates` array and setting the `lastNodeId`, `lastNodeSequenceId` to the traversed node's values.
+AGVがノードの通過を報告するとすぐに、AGVはノードに関連付けられたアクションがあればそれをトリガーする。
 
-As soon as the AGV reports the node as traversed, the AGV shall trigger the actions associated with the node, if any.
+ノードの通過は、そのノードにつながるエッジを離れることも意味する。
+エッジは `edgeStates` から削除され、エッジ上で実行されていたアクションは終了する。
 
-The traversal of a node also marks the leaving of the edge leading up to the node.
-The edge shall then be removed from the `edgeStates` and the actions that were active on the edge shall be finished.
-
-The traversal of the node also marks the moment, when the AGV enters the following edge, if there is one.
-The edge's actions shall now be triggered.
-An exception to this rule is, if the AGV has to pause on the edge (because of a soft or hard blocking edge, or otherwise) – then the AGV enters the edge after it begins moving again.
+ノードの通過は、AGV が次のエッジに進入する瞬間も意味します。
+エッジのアクションがトリガーされます。
+このルールに対する例外は、AGVがエッジ上で一時停止しなければならない場合（ソフトまたはハードのブロッキングエッジ、またはその他の理由による）である。この場合、AGVは再び動き始めてからエッジに入る。
 
 ![Figure 15 Depiction of nodeStates, edgeStates, and actionStates during order handling](./assets/states_during_order_handling.png)
->Figure 15 Depiction of `nodeStates`, `edgeStates`, and `actionStates` during order handling
+>図15 注文処理中の`nodeStates`、`edgeStates`、および`actionStates`の流れ
 
 
-### 6.10.3 Base request
+### 6.10.3 代替機要求
 
-If the AGV detects that its base is running low, it can set the `newBaseRequest` flag to "true" to prevent unnecessary braking.
-
-
-### 6.10.4 Information
-
-The AGV can submit arbitrary additional information to master control via the `information` array.
-It is up to the AGV how long it reports information via an information message.
-
-Master control shall not use the info messages for logic, it shall only be used for visualization and debugging purposes.
+AGVがバッテリー残量が少ないことを検知した場合、`newBaseRequest`フラグを"true"に設定することで、不用意なバッテリー切れを防止することができる。
 
 
-### 6.10.5 Errors
+### 6.10.4 情報
 
-The AGV reports errors via the `errors` array.
-Errors have two levels: 'WARNING' and 'FATAL'.
-A 'WARNING' is a self-resolving error, e.g., a field violation.
-A 'FATAL' error needs human intervention.
-Errors can pass references that help with finding the cause of the error via the `errorReferences` array.
+AGVは、`information`配列を使用して、任意の追加情報をマスターコントロールに送信することができる。
+情報メッセージで情報を報告する時間は、AGVに任されている。
+
+マスターコントロールでは、ロジックに情報メッセージを使用せず、可視化とデバッグ目的でのみ使用する。
 
 
-### 6.10.6 Implementation of the state message
+### 6.10.5 エラー
+
+AGVは `errors`配列を介してエラーを報告する。
+エラーには'WARNING'と'FATAL'の2つのレベルがある。
+'WARNING'は自己解決するエラーで、例えばフィールド違反などである。
+'FATAL'は、人間の介入が必要である。
+エラーは、エラーの原因を特定するのに役立つ参照を`errorReferences`配列を介して渡すことができる。
+
+
+### 6.10.6 stateメッセージの実装
 
 オブジェクト構造 | 単位 | データ型 | 説明
 ---|---|---|---
-headerId | | uint32 | Header ID of the message.<br> The headerId is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
-timestamp | | string | Timestamp (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z").
-version | | string | Version of the protocol [Major].[Minor].[Patch] (e.g., 1.3.2).
-manufacturer | | string | Manufacturer of the AGV.
-serialNumber | | string | Serial number of the AGV.
+headerId | | uint32 | メッセージのヘッダーID<br>ヘッダーIDはトピックごとに定義され、送信されるメッセージごとに1ずつインクリメントされる（受信では必要ない）。
+timestamp | | string | タイムスタンプ (ISO 8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ (e.g., "2017-04-15T11:40:03.12Z").
+version | | string | プロトコルのバージョン [メジャー].[マイナー].[パッチ] (例：1.3.2)
+manufacturer | | string | AGVのメーカー名
+serialNumber | | string | AGVのシリアル番号
 *maps[map]* | | array | Array of map objects that are currently stored on the vehicle.
 orderId| | string | Unique order identification of the current order or the previously finished order. <br>The orderId is kept until a new order is received. <br>Empty string (""), if no previous orderId is available.
 orderUpdateId | | uint32 | Order update identification to identify, that an order update has been accepted by the AGV. <br>"0" if no previous orderUpdateId is available.
@@ -1159,136 +1159,136 @@ referenceValue <br>} | | string | References the value, which belongs to the ref
 eStop | | string | Enum {'AUTOACK', 'MANUAL', 'REMOTE', 'NONE'}<br><br>Acknowledge-Type of eStop:<br>'AUTOACK': auto-acknowledgeable e-stop is activated, e.g., by bumper or protective field.<br>'MANUAL': e-stop hast to be acknowledged manually at the vehicle.<br>'REMOTE': facility e-stop has to be acknowledged remotely.<br>'NONE': no e-stop activated.
 fieldViolation<br>} | | boolean | Protective field violation.<br>"true":field is violated<br>"false":field is not violated.
 
-#### Operating Mode Description
-The following description lists the operatingMode of the topic "state".
+#### 動作モードの説明
+"state"トピックの動作モードの説明を以下に列挙する。
 
-Identifier | Description
+識別子 | 説明
 ---|---
-AUTOMATIC | AGV is under full control of the master control. <br>AGV drives and executes actions based on orders from the master control.
-SEMIAUTOMATIC | AGV is under control of the master control.<br> AGV drives and executes actions based on orders from the master control. <br>The driving speed is controlled by the HMI (speed can't exceed the speed of automatic mode).<br>The steering is under automatic control (non-safe HMI possible).
-MANUAL | Master control is not in control of the AGV. <br>Supervisor doesn't send driving order or actions to the AGV. <br>HMI can be used to control the steering and velocity and handling device of the AGV. <br>Location of the AGV is sent to the master control. <br>When the AGV enters or leaves this mode, it immediately clears all the orders (safe HMI required).
-SERVICE | Master control is not in control of the AGV. <br>Master control doesn't send driving order or actions to the AGV. <br>Authorized personnel can reconfigure the AGV.
-TEACHIN | Master control is not in control of the AGV. <br>Supervisor doesn't send driving order or actions to the AGV. <br>The AGV is being taught, e.g., mapping is done by a master control.
+AUTOMATIC | AGVはマスターコントロールの完全な制御下にある。<br>AGVはマスターコントロールからの命令に基づいて動作し、実行する。
+SEMIAUTOMATIC | AGVはマスターコントロールの管理下にある。<br>AGVはマスターコントロールからの命令に基づいて動作し、実行する。<br>運転速度はHMIによって制御される（速度は自動モードの速度を超えることはできない）。<br>ステアリングは自動制御下にあります（安全でないHMIも可能）。
+MANUAL | AGVはマスターコントロールの制御下にはない。 <br>スーパーバイザーはAGVに運転命令や操作を送信しない。 <br>HMIはAGVのステアリングや速度、操作装置の制御に使用できる。 <br>AGVの位置はマスター制御に送信される。 <br>AGVがこのモードに入ったり、このモードから出たりすると、すべての命令が直ちにクリアされる（安全なHMIが必要である）。
+SERVICE | マスターコントロールはAGVを制御していない。<br>マスターコントロールはAGVに運転命令や動作を送信しない。<br>権限のある担当者はAGVを再設定できる。
+TEACHIN | AGVはマスターコントロールの制御下にはない。 <br>スーパーバイザーはAGVに運転命令や動作を送信しない。 <br>AGVは、例えばマスターコントロールによってマッピングが行われるなど、教示を受けている。
 
->Table 1 The operating modes and their meaning
+>Table 1 動作モードとその意味
 
 
-## 6.11 Action states
+## 6.11 アクション状態
 
-When an AGV receives an `action` (either attached to a `node` or `edge` or via an `instantAction`), it shall represent this `action` with an `actionState` in its `actionStates` array.
+AGVが（`node`または`edge`に添付されているか、`instantAction`経由して）`action`を受信すると、この`action`を`actionStates`配列内の`actionState`で表す。
 
-`actionStates` describe in the field `actionStatus` at which stage of the action's life cycle the action is.
+`actionStates`は、アクションのライフサイクルのどの段階にあるかを`actionStatus`フィールドで説明する。
 
-Table 2 describes, which value the enum `actionStatus` can hold.
+表2は、列挙型`actionStatus`が保持できる値について説明している。
 
-actionStatus | Description
+actionStatus | 説明
 ---|---
-'WAITING' | Action was received by the AGV but the node where it triggers was not yet reached or the edge where it is active was not yet entered.
-'INITIALIZING' | Action was triggered, preparatory measures are initiated.
-'RUNNING' | The action is running.
-'PAUSED' | The action is paused because of a pause instantAction or external trigger (pause button on the AGV)
-'FINISHED' | The action is finished. <br>A result is reported via the resultDescription.
-'FAILED' | Action could not be finished for whatever reason.
+'WAITING' | AGVはアクションを受信したが、トリガーとなるノードにまだ到達していないか、アクティブなエッジにまだ入っていない。
+'INITIALIZING' | アクションがトリガーされ、準備動作が開始された。
+'RUNNING' | アクションが実行中である。
+'PAUSED' |  一時停止インスタントアクションまたは外部トリガー（AGVの停止ボタン）により、動作が一時停止している。
+'FINISHED' | アクションは完了した。<br>結果はresultDescriptionを通じて報告される。
+'FAILED' | 何らかの理由で処理を完了できなかった。
 
->Table 2 The acceptable values for the actionStatus field
+>Table 2 actionStatusフィールドがとりうる値とその意味
 
-A state transition diagram is provided in Figure 16.
+状態遷移図は図16に示されている。
 
 ![Figure 16 All possible status transitions for actionStates](./assets/action_state_transition.png)
->Figure 16 All possible status transitions for actionStates
+>図16 actionStatesの完全な状態遷移図
 
 
-## 6.12 Action blocking types and sequence
+## 6.12 アクションのブロックの種類とシーケンス
 
-The order of multiple actions in a list define the sequence, in which those actions are to be executed.
-The parallel execution of actions is governed by their respective `blockingType`.
+リスト内の複数のアクションの注文は、それらのアクションが実行される順序を定義する。
+アクションの並列実行は、それぞれの `blockingType` によって制御される。
 
-Actions can have three distinct blocking types, described in Table 3.
+アクションには、表 3 に示す 3 つの異なるブロッキングタイプがある。
 
-blockingType | Description
+blockingType | 説明
 ---|---
-NONE | Action can be executed in parallel with other actions and while the vehicle is driving.
-SOFT | Action can be executed in parallel with other actions. Vehicle shall not drive.
-HARD | Action shall not be executed in parallel with other actions. Vehicle shall not drive.
+NONE | 他のアクションと並列に実行でき、車両が走行中にも実行できる。
+SOFT | 他のアクションと並行して実行できる。車両は走行しない。
+HARD | 他のアクションと並行して実行してはならない。車両は走行しない。
 
->Table 3 Action blocking types
+>Table 3 アクションのブロックの種類
 
-If there are multiple actions on the same node with different blocking types, Figure 17 describes how the AGV should handle these actions.
+同一のノードに異なるブロックタイプのアクションが複数ある場合、AGVがそれらのアクションを処理する方法を図17で説明する。
 
 ![Figure 17 Handling multiple actions](./assets/handling_multiple_actions.png)
->Figure 17 Handling multiple actions
+>図17：複数のアクションの処理
 
 
-## 6.13 Topic "visualization"
+## 6.13 "visualization"トピック
 
-For a near real-time position update the AGV can broadcast its position and velocity on the topic `visualization`.
+AGVは、ほぼリアルタイムの位置更新を行うために、`visualization`トピック上で位置と速度をブロードキャストすることができる。
 
-The structure of the position object is the same as the position and velocity object in the state.
-For additional information see Section [6.10.6 Implementation of the state message](#6106-implementation-of-the-state-message) for the vehicle state.
-The update rate for this topic is defined by the integrator.
+位置オブジェクトの構造は、状態の位置および速度オブジェクトと同じである。
+車両の状態については、セクション[6.10.6 stateメッセージの実装](#6106-stateメッセージの実装)を参照のこと。
+このトピックの更新レートは、インテグレータによって定義される。
 
 
-## 6.14 Topic "connection"
+## 6.14 "connection"トピック
 
-During the connection of an AGV client to the broker, a last will topic and message can be set, which is published by the broker upon disconnection of the AGV client from the broker.
-Thus, the master control can detect a disconnection event by subscribing the connection topics of all AGVs.
-The disconnection is detected via a heartbeat that is exchanged between the broker and the client.
-The interval is configurable in most brokers and should be set around 15 seconds.
-The Quality of Service level for the `connection` topic shall be 1 - At Least Once.
+AGVクライアントがブローカーに接続する際に、"書き置き"トピックおよびメッセージを設定することができます。AGVクライアントがブローカーから切断されると、ブローカーによって"書き置き"メッセージが公開される。
+したがって、マスターコントロールは、すべてのAGVの接続トピックをサブスクライブすることで、切断を検出することができる。
+切断は、ブローカーとクライアント間で交換されるハートビートによって検出される。
+この間隔は、ほとんどのブローカーで設定可能であり、15秒程度に設定すべきである。
+`connection`トピックのQuality of Service(QoS)レベルは、1である。つまり、少なくとも1回送信される。
 
-The suggested last will topic structure is:
+推奨される"書き置き"トピックの構造は以下の通りである。
+
+※last willを本稿では"書き置き"と訳している。
 
 **uagv/v2/manufacturer/SN/connection**
 
-The last will message is defined as a JSON encapsulated message with the following fields:
+"書き置き"メッセージは、以下のフィールドを持つJSONカプセル化メッセージとして定義される。
 
-Identifier | Data type | Description
+識別子 | データ型 | 説明
 ---|---|---
-headerId | uint32 | Header ID of the message. <br>The headerId is defined per topic and incremented by 1 with each sent (but not necessarily received) message.
-timestamp | string | Timestamp (ISO8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ(e.g., "2017-04-15T11:40:03.12Z").
-version | string | Version of the protocol [Major].[Minor].[Patch] (e.g., 1.3.2).
-manufacturer | string | Manufacturer of the AGV.
-serialNumber | string | Serial number of the AGV.
-connectionState | string | Enum {'ONLINE', 'OFFLINE', 'CONNECTIONBROKEN'}<br><br>'ONLINE': connection between AGV and broker is active.<br><br>'OFFLINE': connection between AGV and broker has gone offline in a coordinated way. <br><br> 'CONNECTIONBROKEN': the connection between AGV and broker has unexpectedly ended.
+headerId | uint32 | メッセージのヘッダーID<br>ヘッダーIDはトピックごとに定義され、送信されるメッセージごとに1ずつインクリメントされる（受信では必要ない）。
+timestamp | string | タイムスタンプ (ISO8601, UTC); YYYY-MM-DDTHH:mm:ss.ffZ(e.g., "2017-04-15T11:40:03.12Z").
+version | string | プロトコルのバージョン [メジャー].[マイナー].[パッチ] (例：1.3.2)
+manufacturer | string | AGVのメーカー名
+serialNumber | string | AGVのシリアル番号
+connectionState | string | Enum {'ONLINE', 'OFFLINE', 'CONNECTIONBROKEN'}<br><br>'ONLINE': AGVとブローカー間の接続は有効である。<br><br>'OFFLINE': AGVとブローカー間の接続が計画的にオフラインになった。 <br><br> 'CONNECTIONBROKEN': AGVとブローカー間の接続が予期せず終了した。
 
-The last will message will not be sent, when a connection is ended in a graceful way by using an MQTT disconnection command.
-The last will message is only sent by the broker, if the connection is unexpectedly interrupted.
+MQTT切断コマンドを使用して接続を正常に終了させた場合、"書き置き"メッセージは送信されない。
+接続が予期せず中断された場合のみ、ブローカーによって"書き置き"メッセージが送信される。
 
-**Note**: Due to the nature of the last will feature in MQTT, the last will message is defined during the connection phase between the AGV and the MQTT broker.
-As a result, the timestamp and headerId fields will always be outdated.
+**注意**：MQTTの"書き置き"メッセージ機能の性質上、"書き置き"メッセージはAGVとMQTTブローカー間の接続フェーズ中に定義される。
+その結果、タイムスタンプとヘッダーIDフィールドは常に古くなる。
 
-AGV wants to disconnect gracefully:
+AGVが正常に切断するには：
 
-1. AGV sends "uagv/v2/manufacturer/SN/connection" with `connectionState` set to `OFFLINE`.
-2. Disconnect the MQTT connection with a disconnect command.
+1. AGVは"uagv/v2/manufacturer/SN/connection"を `connectionState` を `OFFLINE` に設定して送信する。
+2. disconnectコマンドでMQTT接続を切断する。
 
-AGV comes online:
+AGVがオンラインになるには：
 
-1. Set the last will to "uagv/v2/manufacturer/SN/connection" with the field `connectionState` set to `CONNECTIONBROKEN`, when the MQTT connection is created.
-2. Send the topic "uagv/v2/manufacturer/SN/connection" with `connectionState` set to `ONLINE`.
+1. MQTT接続が作成された際に、フィールド `connectionState` を `CONNECTIONBROKEN` に設定した"uagv/v2/manufacturer/SN/connection"を"書き置き"として設定する。
+2. "uagv/v2/manufacturer/SN/connection"を `connectionState` を `ONLINE` に設定して送信する。
 
-All messages on this topic shall be sent with a retained flag.
+このトピック上のすべてのメッセージは、保持フラグ付きで送信される。
 
-When connection between the AGV and the broker stops unexpectedly, the broker will send the last will topic: "uagv/v2/manufacturer/SN/connection" with the field `connectionState` set to `CONNECTIONBROKEN`.
+AGVとブローカー間の接続が予期せず停止した場合、ブローカーは"書き置き"トピック"uagv/v2/manufacturer/SN/connection"を、`connectionState`フィールドを`CONNECTIONBROKEN`に設定して送信します。
 
+## 6.15 "factsheet"トピック
 
-## 6.15 Topic "factsheet"
+ファクトシートには、特定のAGVシリーズに関する基本情報が記載されている。
+この情報は、異なるAGVタイプの比較を可能にし、AGVシステムの計画、設計、シミュレーションに活用できる。
+また、ファクトシートには、VDA-5050準拠のマスターコントロールにAGVシリーズを統合する際に必要なAGV通信インターフェースに関する情報も記載されている。
 
-The factsheet provides basic information about a specific AGV type series.
-This information allows comparison of different AGV types and can be applied for the planning, dimensioning, and simulation of an AGV system.
-The factsheet also includes information about AGV communication interfaces which are required for the integration of an AGV type series into a VDA-5050-compliant master control.
+AGVファクトシートのいくつかのフィールドの値は、システム統合時にのみ指定できる。例えば、プロジェクト固有の負荷やステーションタイプの割り当て、このAGVがサポートするステーションおよび負荷タイプのリストなどである。
 
-The values for some fields in the AGV factsheet can only be specified during system integration, for example the assignment of project-specific load and station types, together with the list of station and load types which are supported by this AGV.
+ファクトシートは、人間が読める文書であると同時に、マスターコントロールアプリケーションによるインポートなど、機械による処理も想定しているため、JSON文書として指定される。
+マスタ制御は、`factsheetRequest`インスタントアクションを送信することで、AGVにファクトシートを要求することができる。
 
-The factsheet is intended as both a human-readable document and for machine processing, e.g., an import by the master control application, and thus is specified as a JSON document.
-
-The master control can request the factsheet from the AGV by sending the instant action `factsheetRequest`.
-
-All messages on this topic shall be sent with a retained flag.
+このトピックに関するすべてのメッセージは、保持フラグを付けて送信する必要がある。
 
 
-### 6.15.1 Factsheet JSON structure
-The factsheet consists of the JSON objects listed in the following table.
+### 6.15.1 ファクトシートJSON構造
+ファクトシートは、以下の表に列挙されたJSONオブジェクトで構成されている。
 
 | **フィールド** | **データタイプ** | **説明** |
 | --- | --- | --- |
@@ -1307,7 +1307,7 @@ The factsheet consists of the JSON objects listed in the following table.
 
 #### typeSpecification
 
-This JSON object describes general properties of the AGV type.
+このJSONオブジェクトは、AGVタイプの一般的な特性を記述している。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1321,7 +1321,7 @@ This JSON object describes general properties of the AGV type.
 
 #### physicalParameters
 
-This JSON object describes physical properties of the AGV.
+このJSONオブジェクトは、AGVの物理的特性を記述している。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1338,8 +1338,8 @@ This JSON object describes physical properties of the AGV.
 
 #### protocolLimits
 
-This JSON object describes the protocol limitations of the AGV.
-If a parameter is not defined or set to zero then there is no explicit limit for this parameter.
+このJSONオブジェクトは、AGVのプロトコルの制限を記述している。
+パラメータが定義されていない、またはゼロに設定されている場合、そのパラメータには明示的な制限はない。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1379,7 +1379,7 @@ If a parameter is not defined or set to zero then there is no explicit limit for
 
 #### protocolFeatures
 
-This JSON object defines actions and parameters which are supported by the AGV.
+このJSONオブジェクトは、AGVがサポートするアクションとパラメータを定義する。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1407,7 +1407,7 @@ This JSON object defines actions and parameters which are supported by the AGV.
 
 ### agvGeometry
 
-This JSON object defines the geometry properties of the AGV, e.g., outlines and wheel positions.
+このJSONオブジェクトは、AGVの形状特性、例えば外形や車輪の位置などを定義する。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1447,7 +1447,7 @@ This JSON object defines the geometry properties of the AGV, e.g., outlines and 
 
 #### loadSpecification
 
-This JSON object specifies load handling and supported load types of the AGV.
+このJSONオブジェクトは、AGVの負荷処理と対応可能な負荷の種類を指定する。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
@@ -1476,20 +1476,21 @@ This JSON object specifies load handling and supported load types of the AGV.
 
 #### vehicleConfig
 
-This JSON object details the software and hardware versions running on the vehicle, as well as a brief summary of network information.
+このJSONオブジェクトには、車両で稼働しているソフトウェアとハードウェアのバージョン、およびネットワーク情報の簡単な概要が記載されている。
 
 | **フィールド** | **データタイプ** | **説明** |
 |---|---|---|
-| *versions[versionInfo]* | array of JSON object | Array of key-value pair objects containing software and hardware information.| | { | | |
-|&emsp; key | string | Key of the software/hardware version used. (e.g., softwareVersion) |
-|&emsp; value | string | The version corresponding to the key. (e.g., v1.12.4-beta) |
+| *versions[versionInfo]* | array of JSON object | ソフトウェアおよびハードウェア情報を含むキーと値のペアのオブジェクトの配列 |
+| { | | |
+|&emsp; key | string | 使用したソフトウェア/ハードウェアのバージョンキー（例：softwareVersion） |
+|&emsp; value | string | キーに対応するバージョン（例：v1.12.4-beta） |
 | } | | |
-| *network* { | JSON object | Information about the vehicle's network connection. The listed information shall not be updated while the vehicle is operating. |
-|&emsp;&emsp; *dnsServers* | array of string | Array of Domain Name Servers (DNS) used by the vehicle. |
-|&emsp;&emsp; *ntpServers* | array of string | Array of Network Time Protocol (NTP) servers used by the vehicle. |
-|&emsp;&emsp; *localIpAddress* | string | A priori assigned IP address used to communicate with the MQTT broker. Note that this IP address should not be modified/changed during operations. |
-|&emsp;&emsp; *netmask* | string | The subnet mask used in the network configuration corresponding to the local IP address.|
-|&emsp;&emsp; *defaultGateway* | string | The default gateway used by the vehicle, corresponding to the local IP address. |
+| *network* { | JSON object | 車両のネットワーク接続に関する情報<br>車両が稼働中は、リストされた情報を更新しないこと。 |
+|&emsp;&emsp; *dnsServers* | array of string | 車両で使用されるドメインネームサーバー（DNS）の一覧 |
+|&emsp;&emsp; *ntpServers* | array of string | 車両で使用されているネットワークタイムプロトコル（NTP）サーバーの一覧 |
+|&emsp;&emsp; *localIpAddress* | string | MQTTブローカーとの通信に使用される、あらかじめ割り当てられたIPアドレス<br>このIPアドレスは、運用中に変更/修正しないこと。 |
+|&emsp;&emsp; *netmask* | string | ローカルIPアドレスに対応するネットワーク構成で使用されているサブネットマスク |
+|&emsp;&emsp; *defaultGateway* | string | 車両が使用するローカルIPアドレスに対応するデフォルトゲートウェイ　|
 | &emsp;} | | |
 
 
